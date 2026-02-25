@@ -59,6 +59,7 @@
     },
     "autoload": {
         "files": [
+            "config/constant.php",
             "app/CentralLogics/CategoryLogic.php",
             "app/CentralLogics/ProductLogic.php",
             "app/CentralLogics/Helpers.php",
@@ -75,7 +76,6 @@
             "Database\\Seeders\\": "database/seeders/",
             "Modules\\": "Modules/"
         }
-
     },
     "autoload-dev": {
         "psr-4": {
