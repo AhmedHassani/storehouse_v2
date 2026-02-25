@@ -6,7 +6,7 @@
     <div class="content container-fluid">
         <div class="mb-3">
             <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
-                <img width="20" src="{{asset('public/assets/admin/img/icons/deliveryman.png')}}"
+                <img width="20" src="{{asset('assets/admin/img/icons/deliveryman.png')}}"
                     alt="{{ translate('deliveryman') }}">
                 {{translate('Add_New_Deliveryman')}}
             </h2>
@@ -80,7 +80,7 @@
                             <div class="form-group">
                                 <div class="mb-3 align-content-center">
                                     <img class="upload-img-view" id="viewer"
-                                        src="{{asset('public/assets/admin/img/400x400/img2.jpg')}}"
+                                        src="{{asset('assets/admin/img/400x400/img2.jpg')}}"
                                         alt="delivery-man image" />
                                 </div>
                                 <label>{{translate('deliveryman')}} {{translate('image')}}</label>
@@ -177,8 +177,8 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin/js/deliveryman.js')}}"></script>
-    <script src="{{asset('public/assets/admin/js/spartan-multi-image-picker.js')}}"></script>
+    <script src="{{asset('assets/admin/js/deliveryman.js')}}"></script>
+    <script src="{{asset('assets/admin/js/spartan-multi-image-picker.js')}}"></script>
     <script type="text/javascript">
         "use strict"
 
@@ -190,7 +190,7 @@
                 groupClassName: 'col-6 col-sm-4 col-md-6',
                 maxFileSize: '',
                 placeholderImage: {
-                    image: '{{asset('public/assets/admin/img/400x400/img2.jpg')}}',
+                    image: '{{asset('assets/admin/img/400x400/img2.jpg')}}',
                     width: '100%'
                 },
                 dropFileLabel: "Drop Here",

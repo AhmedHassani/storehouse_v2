@@ -6,7 +6,7 @@
     <div class="content container-fluid">
         <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
             <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
-                <img width="20" src="{{asset('public/assets/admin/img/icons/product.png')}}"
+                <img width="20" src="{{asset('assets/admin/img/icons/product.png')}}"
                     alt="{{ translate('product') }}">
                 {{translate('product_list')}}
             </h2>
@@ -254,7 +254,7 @@
                     </div>
                     @if(count($products) == 0)
                         <div class="text-center p-4">
-                            <img class="mb-3 width-7rem" src="{{asset('public/assets/admin/svg/illustrations/sorry.svg')}}"
+                            <img class="mb-3 width-7rem" src="{{asset('assets/admin/svg/illustrations/sorry.svg')}}"
                                 alt="{{ translate('image') }}">
                             <p class="mb-0">{{ translate('No data to show') }}</p>
                         </div>

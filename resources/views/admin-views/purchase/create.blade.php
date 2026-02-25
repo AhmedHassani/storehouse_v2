@@ -150,7 +150,7 @@
                                         </div>
                                         <div class="text-center mt-3">
                                             <img style="height: 200px;border: 1px solid; border-radius: 10px;" id="viewer"
-                                                src="{{asset('public/assets/admin/img/400x400/img2.jpg')}}"
+                                                src="{{asset('assets/admin/img/400x400/img2.jpg')}}"
                                                 alt="receipt image" />
                                         </div>
                                     </div>

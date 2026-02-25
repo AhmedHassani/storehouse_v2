@@ -3,7 +3,7 @@
 @section('title', translate('Update product'))
 
 @push('css_or_js')
-    <link href="{{asset('public/assets/admin/css/tags-input.min.css')}}" rel="stylesheet">
+    <link href="{{asset('assets/admin/css/tags-input.min.css')}}" rel="stylesheet">
 @endpush
 
 @section('content')
@@ -283,7 +283,7 @@
                                                                     <img class="w-100 h-200px" src="{{Helpers::onErrorImage(
                                         $img,
                                         asset('storage/app/public/product') . '/' . $img,
-                                        asset('public/assets/admin/img/160x160/img2.jpg'),
+                                        asset('assets/admin/img/160x160/img2.jpg'),
                                         'product/'
                                     )}}" alt="{{ translate('product') }}">
                                                                     <a href="{{route('admin.product.remove-image', [$product['id'], $img])}}"
@@ -304,9 +304,9 @@
 @endsection
 
 @push('script_2')
-    <script src="{{asset('public/assets/admin/js/spartan-multi-image-picker.js')}}"></script>
-    <script src="{{asset('public/assets/admin')}}/js/tags-input.min.js"></script>
-    <script src="{{ asset('public/assets/admin/js/quill-editor.js') }}"></script>
+    <script src="{{asset('assets/admin/js/spartan-multi-image-picker.js')}}"></script>
+    <script src="{{asset('assets/admin')}}/js/tags-input.min.js"></script>
+    <script src="{{ asset('assets/admin/js/quill-editor.js') }}"></script>
 
     <script>
         "use strict";
@@ -365,7 +365,7 @@
                 groupClassName: 'col-3',
                 maxFileSize: '',
                 placeholderImage: {
-                    image: '{{asset('public/assets/admin/img/400x400/img2.jpg')}}',
+                    image: '{{asset('assets/admin/img/400x400/img2.jpg')}}',
                     width: '100%'
                 },
                 dropFileLabel: "Drop Here",

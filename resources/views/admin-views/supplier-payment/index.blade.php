@@ -173,7 +173,7 @@
 
             @if(count($payments) == 0)
                 <div class="text-center p-4">
-                    <img class="mb-3 width-7rem" src="{{asset('public/assets/admin/svg/illustrations/sorry.svg')}}"
+                    <img class="mb-3 width-7rem" src="{{asset('assets/admin/svg/illustrations/sorry.svg')}}"
                         alt="{{ translate('Image Description') }}">
                     <p class="mb-0">{{ translate('لا توجد بيانات للعرض') }}</p>
                 </div>

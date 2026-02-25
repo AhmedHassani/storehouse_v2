@@ -6,7 +6,7 @@
     <div class="content container-fluid">
         <div class="mb-3">
             <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
-                <img width="20" src="{{asset('public/assets/admin/img/icons/business-setup.png')}}"
+                <img width="20" src="{{asset('assets/admin/img/icons/business-setup.png')}}"
                      alt="{{ translate('business_setup_image') }}">
                 {{translate('business_Setup')}}
             </h2>
@@ -98,7 +98,7 @@
                 <div class="modal-body text-center">
                     <div>
                         <img width="70" height="70" class="aspect-1 "
-                             src="{{ asset('public/assets/admin/img/icons/switch.svg') }}"
+                             src="{{ asset('assets/admin/img/icons/switch.svg') }}"
                              alt="{{ translate('image') }}">
                     </div>
                     <div class="py-4">

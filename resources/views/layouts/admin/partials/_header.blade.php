@@ -1,12 +1,12 @@
 @if (env('APP_MODE') == 'demo')
-    <div class="__announcement-bar" style="background-image: url({{ asset('public/assets/website-top-header.png') }})">
+    <div class="__announcement-bar" style="background-image: url({{ asset('assets/website-top-header.png') }})">
         <div class="container">
             <div class="wrapper">
                 <div class="txt">
                     demo
                 </div>
                 <a href="https://codecanyon.net/item/emarket-ecommerce-app-with-laravel-admin-panel-delivery-man-app/31157454?s_rank=20"
-                    class="click" target="_blank">Click Now <img src="{{ asset('public/assets/arrowww.png') }}" alt=""></a>
+                    class="click" target="_blank">Click Now <img src="{{ asset('assets/arrowww.png') }}" alt=""></a>
                 <a href="https://codecanyon.net/item/emarket-ecommerce-app-with-laravel-admin-panel-delivery-man-app/31157454?s_rank=20"
                     class="btn btn-sm" style="background-color: #FF7500; color:#ffffff" target="_blank">Buy Now</a>
             </div>
@@ -24,13 +24,13 @@
                     <img class="navbar-brand-logo" src="{{Helpers::onErrorImage(
     $logo,
     asset('storage/app/public/ecommerce') . '/' . $logo,
-    asset('public/assets/admin/img/160x160/img2.jpg'),
+    asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{ translate('Logo') }}">
                     <img class="navbar-brand-logo-mini" src="{{Helpers::onErrorImage(
     $logo,
     asset('storage/app/public/ecommerce') . '/' . $logo,
-    asset('public/assets/admin/img/160x160/img2.jpg'),
+    asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{ translate('Logo') }}">
                 </a>

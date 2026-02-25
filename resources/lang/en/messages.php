@@ -2110,4 +2110,5 @@
   'No Address Details' => 'No Address Details',
   'Status updated' => 'Status updated',
   'Order placed but failed to send to Boxy Delivery: Missing region/district' => 'Order placed but failed to send to Boxy Delivery: Missing region/district',
+  'Invalid token' => 'Invalid token',
 );

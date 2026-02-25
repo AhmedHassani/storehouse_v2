@@ -6,7 +6,7 @@
     <div class="content container-fluid">
         <div class="mb-4">
             <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
-                <img width="20" src="{{asset('public/assets/admin/img/icons/third-party.png')}}" alt="{{ translate('3rd_Party') }}">
+                <img width="20" src="{{asset('assets/admin/img/icons/third-party.png')}}" alt="{{ translate('3rd_Party') }}">
                 {{translate('3rd_Party')}}
             </h2>
         </div>
@@ -23,7 +23,7 @@
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div class="__social-media-login-top flex-grow-1">
                                 <h5 class="card-title align-items-center">
-                                    <img src="{{asset('public/assets/admin/img/apple-logo.png')}}" class="mr-1 w--20" alt="{{ translate('apple') }}">
+                                    <img src="{{asset('assets/admin/img/apple-logo.png')}}" class="mr-1 w--20" alt="{{ translate('apple') }}">
                                     {{translate('Apple Login')}}
                                 </h5>
                             </div>

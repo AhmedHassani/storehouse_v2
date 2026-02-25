@@ -7,7 +7,7 @@
         <!-- Page Header -->
         <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
             <h2 class="h1 mb-0 d-flex align-items-center gap-2">
-                <img width="20" src="{{asset('public/assets/admin/img/attribute.png')}}" alt="">
+                <img width="20" src="{{asset('assets/admin/img/attribute.png')}}" alt="">
                 <span class="page-header-title">
                     {{translate('حقول الطلب المتغيرة')}}
                 </span>
@@ -197,7 +197,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="8" class="text-center py-5">
-                                            <img src="{{asset('public/assets/admin/svg/illustrations/sorry.svg')}}"
+                                            <img src="{{asset('assets/admin/svg/illustrations/sorry.svg')}}"
                                                 alt="{{translate('لا توجد بيانات')}}" class="mb-3" width="100">
                                             <p class="text-muted">{{translate('لم يتم إضافة حقول متغيرة بعد')}}</p>
                                         </td>

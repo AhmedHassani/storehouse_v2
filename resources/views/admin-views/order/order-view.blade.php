@@ -7,7 +7,7 @@
 
     <div class="mb-3">
         <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
-            <img src="{{asset('public/assets/admin/img/icons/all_orders.png')}}" alt="{{ translate('order_details') }}">
+            <img src="{{asset('assets/admin/img/icons/all_orders.png')}}" alt="{{ translate('order_details') }}">
             {{translate('order_details')}}
             <span class="badge badge-soft-dark rounded-50 fz-14">{{$order->details->count()}}</span>
         </h2>
@@ -221,7 +221,7 @@
                                                     <img class="img-fit" src="{{$detail->product['image_fullpath'][0]}}"
                                                         alt="{{ translate('image') }}">
                                                 @else
-                                                    <img src="{{asset('public/assets/admin/img/160x160/img2.jpg')}}"
+                                                    <img src="{{asset('assets/admin/img/160x160/img2.jpg')}}"
                                                         class="img-fit img-fluid rounded aspect-ratio-1"
                                                         alt="{{ translate('image') }}">
                                                 @endif
