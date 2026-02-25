@@ -51,7 +51,7 @@ trait SystemAddonTrait
         $full_data = [];
         foreach ($addons as $item) {
             $info = include($item . '/Addon/info.php');
-            if ($info['is_published']){
+            if ($info['is_published']) {
                 $full_data[] = include($item . '/Addon/admin_routes.php');
             }
         }
@@ -70,7 +70,7 @@ trait SystemAddonTrait
         $addons = [];
         foreach ($directories as $directory) {
             $sub_dirs = self::getDirectories($dir . '/' . $directory); // Use $dir instead of 'Modules/'
-            if($directory == 'Gateways'){
+            if ($directory == 'Gateways') {
                 if (in_array('Addon', $sub_dirs)) {
                     $addons[] = $dir . '/' . $directory; // Use $dir instead of 'Modules/'
                 }
@@ -97,11 +97,18 @@ trait SystemAddonTrait
     function getDirectories(string $path): array
     {
         $directories = [];
-        $items = scandir($path);
+        $full_path = base_path($path);
+        if (!is_dir($full_path)) {
+            $full_path = $path;
+        }
+        if (!is_dir($full_path)) {
+            return $directories;
+        }
+        $items = scandir($full_path);
         foreach ($items as $item) {
             if ($item == '..' || $item == '.')
                 continue;
-            if (is_dir($path . '/' . $item))
+            if (is_dir($full_path . '/' . $item))
                 $directories[] = $item;
         }
         return $directories;
