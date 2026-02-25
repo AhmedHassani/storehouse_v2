@@ -70,7 +70,9 @@ class Helpers
         if ($multi_data == true) {
             foreach ($data as $item) {
                 $variations = [];
-                $item['category_ids'] = json_decode($item['category_ids']);
+                $item['category_ids'] = is_array($item['category_ids'])
+                    ? $item['category_ids']
+                    : json_decode($item['category_ids'], true);
                 $item['image'] = json_decode($item['image']);
                 $item['attributes'] = json_decode($item['attributes']);
                 $item['choice_options'] = json_decode($item['choice_options']);
@@ -99,26 +101,63 @@ class Helpers
             $data = $storage;
         } else {
             $variations = [];
-            $data['category_ids'] = json_decode($data['category_ids']);
-            $data['image'] = json_decode($data['image']);
-            $data['attributes'] = json_decode($data['attributes']);
-            $data['choice_options'] = json_decode($data['choice_options']);
-            foreach (json_decode($data['variations'], true) as $var) {
-                $variations[] = [
-                    'type' => $var['type'],
-                    'price' => (double) $var['price'],
-                    'stock' => (int) $var['stock'],
-                ];
+
+            $data['category_ids'] = is_array($data['category_ids'] ?? null)
+                ? $data['category_ids']
+                : (!empty($data['category_ids']) ? json_decode($data['category_ids'], true) : []);
+
+            $data['image'] = is_array($data['image'] ?? null)
+                ? $data['image']
+                : (!empty($data['image']) ? json_decode($data['image'], true) : []);
+
+            $data['attributes'] = is_array($data['attributes'] ?? null)
+                ? $data['attributes']
+                : (!empty($data['attributes']) ? json_decode($data['attributes'], true) : []);
+
+            $data['choice_options'] = is_array($data['choice_options'] ?? null)
+                ? $data['choice_options']
+                : (!empty($data['choice_options']) ? json_decode($data['choice_options'], true) : []);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fix variations safely
+            |--------------------------------------------------------------------------
+            */
+            $decodedVariations = is_array($data['variations'] ?? null)
+                ? $data['variations']
+                : (!empty($data['variations']) ? json_decode($data['variations'], true) : []);
+
+            if (is_array($decodedVariations)) {
+                foreach ($decodedVariations as $var) {
+                    $variations[] = [
+                        'type' => $var['type'] ?? null,
+                        'price' => isset($var['price']) ? (double) $var['price'] : 0,
+                        'stock' => isset($var['stock']) ? (int) $var['stock'] : 0,
+                    ];
+                }
             }
 
             $data['variations'] = $variations;
-            if (count($data['translations']) > 0) {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fix translations safely
+            |--------------------------------------------------------------------------
+            */
+            if (!empty($data['translations']) && is_array($data['translations'])) {
                 foreach ($data['translations'] as $translation) {
-                    if ($translation->key == 'name') {
-                        $data['name'] = $translation->value;
+
+                    $key = is_object($translation) ? $translation->key : ($translation['key'] ?? null);
+                    $value = is_object($translation) ? $translation->value : ($translation['value'] ?? null);
+
+                    if ($key === 'name') {
+                        $data['name'] = $value;
                     }
-                    if ($translation->key == 'description') {
-                        $data['description'] = $translation->value;
+
+                    if ($key === 'description') {
+                        $data['description'] = $value;
                     }
                 }
             }

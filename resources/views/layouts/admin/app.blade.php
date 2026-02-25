@@ -559,4 +559,76 @@
     </script>
 </body>
 
+<!-- Mobile Menu Fix Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleButtons = document.querySelectorAll('.js-navbar-vertical-aside-toggle-invoker');
+        const sidebar = document.querySelector('.js-navbar-vertical-aside');
+        const sidebarParent = document.getElementById('sidebarMain'); // Get Parent Wrapper
+        const body = document.body;
+
+        if (sidebar) {
+            // Toggle Menu
+            toggleButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation(); // Prevent immediate closing
+
+                    // Toggle logic
+                    const isVisible = sidebar.classList.toggle('mobile-menu-visible');
+
+                    // Handle Parent Wrapper Visibility
+                    if (sidebarParent) {
+                        if (isVisible) {
+                            sidebarParent.classList.remove('d-none');
+                            sidebarParent.style.display = 'block'; // Force block
+                        } else {
+                            // Only hide if we want to revert to original state
+                            sidebarParent.classList.add('d-none');
+                            sidebarParent.style.display = 'none';
+                        }
+                    }
+
+                    // Create overlay if not exists
+                    let overlay = document.querySelector('.mobile-menu-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'mobile-menu-overlay';
+                        overlay.style.position = 'fixed';
+                        overlay.style.top = '0';
+                        overlay.style.left = '0';
+                        overlay.style.width = '100%';
+                        overlay.style.height = '100%';
+                        overlay.style.backgroundColor = 'transparent';
+                        overlay.style.zIndex = '9998'; // Just below sidebar (9999)
+                        overlay.style.display = 'none';
+                        overlay.onclick = function () {
+                            sidebar.classList.remove('mobile-menu-visible');
+                            if (sidebarParent) {
+                                sidebarParent.classList.add('d-none');
+                                sidebarParent.style.display = 'none';
+                            }
+                            overlay.style.display = 'none';
+                        };
+                        document.body.appendChild(overlay);
+                    }
+
+                    // Show/Hide overlay based on menu state
+                    if (isVisible) {
+                        overlay.style.display = 'block';
+                    } else {
+                        overlay.style.display = 'none';
+                        // Force hide template's default overlay if it exists
+                        const templateOverlay = document.querySelector('.navbar-vertical-aside-mobile-overlay');
+                        if (templateOverlay) {
+                            templateOverlay.style.display = 'none';
+                            templateOverlay.style.opacity = '0';
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
+
+
 </html>

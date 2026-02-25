@@ -106,6 +106,9 @@ class ProductController extends Controller
     {
         $queryParam = [];
         $search = $request['search'];
+        $stock_filter = $request['stock_filter']; // all, in_stock, out_of_stock, low_stock
+        $status_filter = $request['status_filter']; // all, active, inactive
+
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
             $query = $this->product->where(function ($q) use ($key) {
@@ -113,13 +116,37 @@ class ProductController extends Controller
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('name', 'like', "%{$value}%");
                 }
-            })->latest();
+            });
             $queryParam = ['search' => $request['search']];
         } else {
-            $query = $this->product->latest();
+            $query = $this->product;
         }
-        $products = $query->paginate(Helpers::pagination_limit())->appends($queryParam);
-        return view('admin-views.product.list', compact('products', 'search'));
+
+        // Stock filter
+        if ($stock_filter && $stock_filter != 'all') {
+            if ($stock_filter == 'in_stock') {
+                $query = $query->where('total_stock', '>', 10);
+            } elseif ($stock_filter == 'low_stock') {
+                $query = $query->where('total_stock', '>', 0)->where('total_stock', '<=', 10);
+            } elseif ($stock_filter == 'out_of_stock') {
+                $query = $query->where('total_stock', '<=', 0);
+            }
+            $queryParam['stock_filter'] = $stock_filter;
+        }
+
+        // Status filter
+        if ($status_filter && $status_filter != 'all') {
+            if ($status_filter == 'active') {
+                $query = $query->where('status', 1);
+            } elseif ($status_filter == 'inactive') {
+                $query = $query->where('status', 0);
+            }
+            $queryParam['status_filter'] = $status_filter;
+        }
+
+        $products = $query->latest()->paginate(Helpers::pagination_limit())->appends($queryParam);
+
+        return view('admin-views.product.list', compact('products', 'search', 'stock_filter', 'status_filter'));
     }
 
     /**

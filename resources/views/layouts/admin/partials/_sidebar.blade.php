@@ -20,12 +20,14 @@
     'ecommerce/'
 )}}">
                     </a>
-
+                    <!--
                     <button type="button" class="js-navbar-vertical-aside-toggle-invoker close mt-1">
                         <i class="tio-first-page navbar-vertical-aside-toggle-short-align"></i>
                         <i class="tio-last-page navbar-vertical-aside-toggle-full-align"
                             title="{{ translate('Expand') }}"></i>
                     </button>
+                    -->
+
                 </div>
 
                 <div class="navbar-vertical-content">
@@ -765,11 +767,13 @@
         top: 0;
         bottom: 0;
         right: 0;
-        left: auto;
-        z-index: 1030;
+        left: auto !important;
+        z-index: 1200 !important;
+        /* Higher than overlay */
         /* similar to navbar z-index */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        transition: all 0.3s ease-in-out;
     }
 
     /* Make content flow RTL and align labels/menus to the right */
@@ -791,8 +795,48 @@
     }
 
     /* Ensure toggle button stays visually consistent (flip placement) */
+    /* Ensure toggle button stays visually consistent (flip placement) */
     .sidebar-rtl .js-navbar-vertical-aside-toggle-invoker {
         float: left;
+    }
+
+    /* Fix Mobile Menu Z-Index Issue & Overlay Styles - RESTRICTED TO MOBILE/TABLET */
+    @media (max-width: 1199.98px) {
+        .sidebar-rtl {
+            z-index: 9999 !important;
+            display: block !important;
+            transform: translateX(100%);
+            /* Start hidden in RTL */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Smooth Slide */
+        }
+
+        /* When active by custom JS */
+        .sidebar-rtl.mobile-menu-visible {
+            transform: translateX(0) !important;
+            right: 0 !important;
+            /* Force to edge */
+            left: auto !important;
+            /* Reset left */
+            top: 0 !important;
+            z-index: 2147483647 !important;
+            /* Maximum Possible Z-Index */
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.15);
+            background-color: #fff !important;
+            /* Ensure solid background */
+            width: 270px !important;
+            /* Force width */
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: block !important;
+            position: fixed !important;
+            height: 100vh !important;
+        }
+
+        /* Force overlay below sidebar */
+        .navbar-vertical-aside-mobile-overlay {
+            z-index: 1040 !important;
+        }
     }
 </style>
 

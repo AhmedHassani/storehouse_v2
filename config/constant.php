@@ -1,11 +1,11 @@
 <?php
 
-const CACHE_BUSINESS_SETTINGS_TABLE = 'cache_business_settings_table';
-const CACHE_LOGIN_SETUP_TABLE = 'cache_login_setup_table';
-const CACHE_BANNER_TABLE = 'cache_banner_table';
-const CACHE_CATEGORY_TABLE = 'cache_category_table';
+if (!defined('CACHE_BUSINESS_SETTINGS_TABLE')) define('CACHE_BUSINESS_SETTINGS_TABLE', 'cache_business_settings_table');
+if (!defined('CACHE_LOGIN_SETUP_TABLE')) define('CACHE_LOGIN_SETUP_TABLE', 'cache_login_setup_table');
+if (!defined('CACHE_BANNER_TABLE')) define('CACHE_BANNER_TABLE', 'cache_banner_table');
+if (!defined('CACHE_CATEGORY_TABLE')) define('CACHE_CATEGORY_TABLE', 'cache_category_table');
 
-const TELEPHONE_CODES = [
+if (!defined('TELEPHONE_CODES')) define('TELEPHONE_CODES', [
     ["name" => 'UK (+44)', "code" => '44'],
     ["name" => 'USA (+1)', "code" => '1'],
     ["name" => 'Algeria (+213)', "code" => '213'],
@@ -219,9 +219,9 @@ const TELEPHONE_CODES = [
     ["name" => 'Yemen (South)(+967)', "code" => '967'],
     ["name" => 'Zambia (+260)', "code" => '260'],
     ["name" => 'Zimbabwe (+263)', "code" => '263'],
-];
+]);
 
-const COUNTRY_CODE = [
+if (!defined('COUNTRY_CODE')) define('COUNTRY_CODE', [
     ['code' => 'AF', 'name' => 'Afghanistan'],
     ['code' => 'AX', 'name' => 'Åland Islands'],
     ['code' => 'AL', 'name' => 'Albania'],
@@ -471,9 +471,9 @@ const COUNTRY_CODE = [
     ['code' => 'YE', 'name' => 'Yemen'],
     ['code' => 'ZM', 'name' => 'Zambia'],
     ['code' => 'ZW', 'name' => 'Zimbabwe'],
-];
+]);
 
-const TIME_ZONE = [
+if (!defined('TIME_ZONE')) define('TIME_ZONE', [
     ['key' => 'Pacific/Midway', 'name' => '(UTC-11:00) Midway Island'],
     ['key' => 'Pacific/Samoa', 'name' => '(UTC-11:00) Samoa'],
     ['key' => 'Pacific/Honolulu', 'name' => '(UTC-10:00) Hawaii'],
@@ -615,10 +615,10 @@ const TIME_ZONE = [
     ['key' => 'Asia/Magadan', 'name' => '(UTC+12:00) Solomon Is.'],
     ['key' => 'Pacific/Auckland', 'name' => '(UTC+12:00) Wellington'],
     ['key' => 'Pacific/Tongatapu', 'name' => '(UTC+13:00) Nuku\'alofa'],
-];
+]);
 
 
-const LANGUAGE_CODE = [
+if (!defined('LANGUAGE_CODE')) define('LANGUAGE_CODE', [
     ['code' => 'en', 'name' => 'English (default)'],
     ['code' => 'af', 'name' => 'Afrikaans'],
     ['code' => 'sq', 'name' => 'Albanian - shqip'],
@@ -761,4 +761,4 @@ const LANGUAGE_CODE = [
     ['code' => 'yi', 'name' => 'Yiddish'],
     ['code' => 'yo', 'name' => 'Yoruba - Èdè Yorùbá'],
     ['code' => 'zu', 'name' => 'Zulu - isiZulu'],
-];
+]);

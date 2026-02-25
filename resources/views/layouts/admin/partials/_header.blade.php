@@ -14,9 +14,10 @@
     </div>
 @endif
 <div id="headerMain" class="d-none">
-    <header id="header"
-        class="navbar navbar-expand-lg navbar-fixed navbar-height navbar-flush navbar-container navbar-bordered">
+    <header id="header."
+        class="navbar navbar-expand-lg navbar-fixed navbar-height navbar-flush  navbar-bordered">
         <div class="navbar-nav-wrap">
+
             <div class="navbar-brand-wrapper">
                 @php($logo = Helpers::get_business_settings('logo'))
                 <a class="navbar-brand" href="{{route('admin.dashboard')}}" aria-label="">
@@ -35,14 +36,21 @@
                 </a>
             </div>
 
-            <div class="navbar-nav-wrap-content-left d-xl-none">
-                <button type="button" class="js-navbar-vertical-aside-toggle-invoker close mr-3">
+            <div class="navbar-nav-wrap-content-left">
+                <!-- Mobile Menu Toggle -->
+                <button type="button" class="js-navbar-vertical-aside-toggle-invoker close mr-3 d-xl-none">
+                    <i class="tio-menu-hamburger"></i>
+                </button>
+
+                <!--
+                <button type="button" class="js-navbar-vertical-aside-toggle-invoker close mr-3 d-none d-xl-block">
                     <i class="tio-first-page navbar-vertical-aside-toggle-short-align" data-toggle="tooltip"
                         data-placement="right" title="{{ translate('Collapse') }}"></i>
                     <i class="tio-last-page navbar-vertical-aside-toggle-full-align"
                         data-template='<div class="tooltip d-none d-sm-block" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>'
                         data-toggle="tooltip" data-placement="right" title="{{ translate('Expand') }}"></i>
                 </button>
+                -->
             </div>
 
             <div class="navbar-nav-wrap-content-right">
@@ -67,7 +75,8 @@
                             <a class="js-hs-unfold-invoker btn btn-icon btn-ghost-secondary rounded-circle"
                                 href="{{route('admin.order.list', ['status' => 'pending'])}}">
                                 <i class="tio-shopping-cart-outlined"></i>
-                                <span class="btn-status btn-status-danger">{{\App\Models\Order::where(['checked' => 0])->count()}}</span>
+                                <span
+                                    class="btn-status btn-status-danger">{{\App\Models\Order::where(['checked' => 0])->count()}}</span>
                             </a>
                         </div>
                     </li>
@@ -78,7 +87,8 @@
                                 href="javascript:;" data-hs-unfold-options='{
                                      "target": "#accountNavbarDropdown",
                                      "type": "css-animation"
-                                   }'><div class="d-none d-md-block media-body text-right">
+                                   }'>
+                                <div class="d-none d-md-block media-body text-right">
                                     <h5 class="profile-name text-capitalize mb-0">{{auth('admin')->user()->f_name}}</h5>
                                 </div>
                                 <div class="avatar avatar-sm avatar-circle">

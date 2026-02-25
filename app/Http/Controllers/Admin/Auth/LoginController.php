@@ -58,7 +58,8 @@ class LoginController extends Controller
             $logo,
             asset('storage/app/public/ecommerce') . '/' . $logo,
             asset('public/assets/admin/img/160x160/img2.jpg'),
-            'ecommerce/');
+            'ecommerce/'
+        );
 
         return view('admin-views.auth.login', compact('logo'));
     }
@@ -74,6 +75,8 @@ class LoginController extends Controller
             'password' => 'required|min:6'
         ]);
 
+        // CAPTCHA DISABLED FOR LOCAL DEVELOPMENT
+        /*
         $recaptcha = Helpers::get_business_settings('recaptcha');
         if (isset($recaptcha) && $recaptcha['status'] == 1 && !$request?->set_default_captcha) {
             $request->validate([
@@ -100,6 +103,7 @@ class LoginController extends Controller
                 return back()->withErrors(translate('Captcha Failed'));
             }
         }
+        */
 
         if (Session::has('default_captcha_code')) {
             Session::forget('default_captcha_code');

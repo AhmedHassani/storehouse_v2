@@ -18,11 +18,10 @@ class DeliverymanController extends Controller
     use WalletTransaction;
 
     public function __construct(
-        private DeliveryMan     $deliveryMan,
+        private DeliveryMan $deliveryMan,
         private DeliveryHistory $deliveryHistory,
-        private Order           $order,
-    )
-    {
+        private Order $order,
+    ) {
     }
 
     /**
@@ -68,9 +67,38 @@ class DeliverymanController extends Controller
                 ]
             ], 401);
         }
-        $orders = $this->order->with(['customer', 'branch'])
+        $orders = $this->order->with(['customer', 'branch', 'delivery_address'])
             ->whereIn('order_status', ['pending', 'processing', 'out_for_delivery', 'confirmed'])
             ->where(['delivery_man_id' => $dm['id']])->get();
+
+        $orders->map(function ($order) {
+            if (!$order->delivery_address) {
+                unset($order->delivery_address);
+                $fallback = \App\Models\CustomerAddress::where('user_id', $order->user_id)->first();
+                if ($fallback) {
+                    $order->delivery_address = $fallback;
+                } elseif ($order->customer) {
+                    $order->delivery_address = [
+                        'id' => 0,
+                        'address_type' => 'Home',
+                        'contact_person_number' => $order->customer['phone'] ?? '',
+                        'address' => translate('No Address Details'),
+                        'latitude' => '0',
+                        'longitude' => '0',
+                        'created_at' => now()->toDateTimeString(),
+                        'updated_at' => now()->toDateTimeString(),
+                        'user_id' => $order->user_id,
+                        'is_guest' => $order->is_guest,
+                        'contact_person_name' => ($order->customer['f_name'] ?? '') . ' ' . ($order->customer['l_name'] ?? ''),
+                        'floor' => '',
+                        'house' => '',
+                        'road' => ''
+                    ];
+                }
+            }
+            return $order;
+        });
+
         return response()->json($orders, 200);
     }
 
@@ -261,6 +289,34 @@ class DeliverymanController extends Controller
             ->where(['delivery_man_id' => $dm['id']])
             ->get();
 
+        $orders->map(function ($order) {
+            if (!$order->delivery_address) {
+                unset($order->delivery_address);
+                $fallback = \App\Models\CustomerAddress::where('user_id', $order->user_id)->first();
+                if ($fallback) {
+                    $order->delivery_address = $fallback;
+                } elseif ($order->customer) {
+                    $order->delivery_address = [
+                        'id' => 0,
+                        'address_type' => 'Home',
+                        'contact_person_number' => $order->customer['phone'] ?? '',
+                        'address' => translate('No Address Details'),
+                        'latitude' => '0',
+                        'longitude' => '0',
+                        'created_at' => now()->toDateTimeString(),
+                        'updated_at' => now()->toDateTimeString(),
+                        'user_id' => $order->user_id,
+                        'is_guest' => $order->is_guest,
+                        'contact_person_name' => ($order->customer['f_name'] ?? '') . ' ' . ($order->customer['l_name'] ?? ''),
+                        'floor' => '',
+                        'house' => '',
+                        'road' => ''
+                    ];
+                }
+            }
+            return $order;
+        });
+
         return response()->json($orders, 200);
     }
 
@@ -380,9 +436,34 @@ class DeliverymanController extends Controller
         }
 
         $order = $this->order
-            ->with(['customer', 'branch'])
+            ->with(['customer', 'branch', 'delivery_address'])
             ->where(['delivery_man_id' => $dm['id'], 'id' => $request->id])
             ->first();
+
+        if ($order && !$order->delivery_address) {
+            unset($order->delivery_address);
+            $fallback = \App\Models\CustomerAddress::where('user_id', $order->user_id)->first();
+            if ($fallback) {
+                $order->delivery_address = $fallback;
+            } elseif ($order->customer) {
+                $order->delivery_address = [
+                    'id' => 0,
+                    'address_type' => 'Home',
+                    'contact_person_number' => $order->customer['phone'] ?? '',
+                    'address' => translate('No Address Details'),
+                    'latitude' => '0',
+                    'longitude' => '0',
+                    'created_at' => now()->toDateTimeString(),
+                    'updated_at' => now()->toDateTimeString(),
+                    'user_id' => $order->user_id,
+                    'is_guest' => $order->is_guest,
+                    'contact_person_name' => ($order->customer['f_name'] ?? '') . ' ' . ($order->customer['l_name'] ?? ''),
+                    'floor' => '',
+                    'house' => '',
+                    'road' => ''
+                ];
+            }
+        }
 
         return response()->json($order, 200);
     }

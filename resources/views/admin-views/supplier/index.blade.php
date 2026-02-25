@@ -100,6 +100,9 @@
                                 <td>{{$supplier['address']}}</td>
                                 <td>
                                     <div class="d-flex justify-content-center gap-2">
+                                        <a class="btn btn-outline-primary square-btn"
+                                            href="{{route('admin.supplier.show', [$supplier['id']])}}"
+                                            title="{{translate('عرض التفاصيل')}}"><i class="tio tio-visible"></i></a>
                                         <a class="btn btn-outline-info square-btn"
                                             href="{{route('admin.supplier.edit', [$supplier['id']])}}"><i
                                                 class="tio tio-edit"></i></a>

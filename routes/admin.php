@@ -398,6 +398,8 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::get('add-new', [SupplierController::class, 'index'])->name('add-new')->middleware('permission:supplier.add');
             Route::post('store', [SupplierController::class, 'store'])->name('store')->middleware('permission:supplier.add');
             Route::get('list', [SupplierController::class, 'index'])->name('list')->middleware('permission:supplier.view'); // Re-using index as list
+            Route::get('show/{id}', [SupplierController::class, 'show'])->name('show')->middleware('permission:supplier.view');
+            Route::get('export-timeline/{id}', [SupplierController::class, 'exportTimeline'])->name('export-timeline')->middleware('permission:supplier.view');
             Route::get('edit/{id}', [SupplierController::class, 'edit'])->name('edit')->middleware('permission:supplier.edit');
             Route::post('update/{id}', [SupplierController::class, 'update'])->name('update')->middleware('permission:supplier.edit');
             Route::delete('delete/{id}', [SupplierController::class, 'delete'])->name('delete')->middleware('permission:supplier.delete');

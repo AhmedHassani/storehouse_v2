@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="content container-fluid">
+
     <div class="mb-3">
         <h2 class="text-capitalize mb-0 d-flex align-items-center gap-2">
             <img src="{{asset('public/assets/admin/img/icons/all_orders.png')}}" alt="{{ translate('order_details') }}">
@@ -11,7 +12,9 @@
             <span class="badge badge-soft-dark rounded-50 fz-14">{{$order->details->count()}}</span>
         </h2>
     </div>
+    
     @php($googleMapStatus = \App\CentralLogics\Helpers::get_business_settings('google_map_status'))
+    
     <div class="row">
         <div class="col-lg-{{$order->user_id == null ? 12 : 8}} mb-3 mb-lg-0">
             <div class="card mb-3 mb-lg-5">
@@ -84,7 +87,6 @@
                             <div class="col-sm-6">
                                 <div class="d-flex flex-column gap-2 align-items-sm-end h-100">
                                     <div class="d-flex gap-2">
-
                                         @if($googleMapStatus == 1)
                                         <div class="hs-unfold">
                                             @if($order['order_status'] == 'out_for_delivery')
@@ -399,7 +401,6 @@
                 </div>
             </div>
         </div>
-
         @if($order->user_id != null)
         <div class="col-lg-4">
             @if($order['order_type'] != 'pos')
@@ -448,9 +449,14 @@
                         </div>
                         @if($order['order_type'] != 'self_pickup' && $order['order_type'] != 'pos')
                             <div class="mt-3">
-                                <h6>{{translate('Delivery Company')}}</h6>
-                                <select class="form-control" name="delivery_man_id" disabled>
-                                    <option selected>{{translate('Boxy')}}</option>
+                                <h6>{{translate('Delivery Man')}}</h6>
+                                <select class="form-control" name="delivery_man_id" id="select-delivery-man">
+                                    <option value="0">{{translate('Select Delivery Man')}}</option>
+                                    @foreach($deliverymen as $deliveryMan)
+                                        <option value="{{$deliveryMan['id']}}" {{$order['delivery_man_id'] == $deliveryMan['id'] ? 'selected' : ''}}>
+                                            {{$deliveryMan['f_name']}} {{$deliveryMan['l_name']}}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                         @endif
@@ -660,7 +666,16 @@
         </div>
         @endif
     </div>
+
+
 </div>
+
+
+
+
+
+
+
 
 <div class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel"
     aria-hidden="true">
