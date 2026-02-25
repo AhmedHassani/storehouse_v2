@@ -42,7 +42,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
     });
 
     Route::group(['middleware' => ['admin']], function () {
-        Route::get('/fcm/{id}', [SystemController::class, 'fcm'])->name('dashboard');
+        Route::get('/fcm/{id}', [SystemController::class, 'fcm'])->name('fcm');
         Route::get('/', [SystemController::class, 'dashboard'])->name('dashboard');
         Route::post('order-stats', [SystemController::class, 'orderStats'])->name('order-stats');
         Route::get('settings', [SystemController::class, 'settings'])->name('settings');
