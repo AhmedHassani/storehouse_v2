@@ -40,5 +40,8 @@ jobs:
             # تنفيذ أوامر قواعد البيانات إن وجدت
             php artisan migrate --force
             
+            # ربط مجلد التخزين (لحل مشكلة الصور 404)
+            php artisan storage:link || true
+            
             # تنظيف الكاش
             php artisan optimize:clear
