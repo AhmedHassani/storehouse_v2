@@ -205,6 +205,7 @@
 @php($order = \App\Models\Order::find(session('last_order')))
 @if($order)
 @php(session(['last_order' => false]))
+{{-- 
 <div class="modal fade" id="print-invoice" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -231,7 +232,9 @@
             </div>
         </div>
     </div>
-    @endif
+</div>
+--}}
+@endif
 
     @include('admin-views.pos._delivery_fee_modal')
 
@@ -242,10 +245,12 @@
             "use strict";
 
             $(document).on('ready', function () {
+                /*
                 @if($order)
                     $('#print-invoice').modal('show');
                 @endif
-                                                                                                    });
+                */
+            });
 
             $("#print-invoice-div").on('click', function () {
                 let name = $(this).data('name');

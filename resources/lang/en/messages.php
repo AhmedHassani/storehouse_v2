@@ -2199,4 +2199,7 @@
   'order(s) to Boxy as Ready to Pick Up?' => 'Order(s) to Boxy as Ready to Pick Up ',
   'Boxy notified for ' => 'Boxy notified for ',
   ' orders! Statuses set to Scheduled.' => ' orders! Statuses set to Scheduled.',
+  'نوع التوصيل' => 'نوع التوصيل',
+  'شركة' => 'شركة',
+  'ذاتي' => 'ذاتي',
 );
