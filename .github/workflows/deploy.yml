@@ -24,8 +24,9 @@ jobs:
             # 1. انتقل إلى مجلد المشروع على السيرفر (قم بتغيير المسار إذا كان مختلفاً)
             cd /var/www/scouters
             
-            # 2. اسحب أحدث التعديلات من GitHub
-            git pull origin main
+            # 2. اسحب أحدث التعديلات من GitHub وأجبر السيرفر على التطابق التام
+            git fetch origin main
+            git reset --hard origin/main
             
             # 3. تحديث الحزم (في حال وجود تعديلات في composer.json)
             composer install --no-interaction --prefer-dist --optimize-autoloader
