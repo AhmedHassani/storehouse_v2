@@ -28,6 +28,11 @@ jobs:
           script: |
             cd /var/www/scouters
             
+            # التأكد من وجود مجلد الكاش وإعطائه التصاريح اللازمة
+            mkdir -p bootstrap/cache
+            chmod -R 777 bootstrap/cache
+            chmod -R 777 storage
+            
             # تحديث الحزم
             composer install --no-interaction --prefer-dist --optimize-autoloader
             
