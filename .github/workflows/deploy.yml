@@ -41,7 +41,8 @@ jobs:
             php artisan migrate --force
             
             # ربط مجلد التخزين (لحل مشكلة الصور 404)
-            php artisan storage:link || true
+            rm -rf public/storage
+            php artisan storage:link
             
             # تنظيف الكاش
             php artisan optimize:clear
