@@ -32,6 +32,7 @@ jobs:
             mkdir -p bootstrap/cache
             chmod -R 777 bootstrap/cache
             chmod -R 777 storage
+            chmod -R 777 resources/lang
             
             # تحديث الحزم
             composer install --no-interaction --prefer-dist --optimize-autoloader
