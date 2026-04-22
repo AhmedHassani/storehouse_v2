@@ -260,6 +260,20 @@ if ($is_free_delivery) {
         </div>
 
         <div class="my-4">
+            <div class="text-dark d-flex mb-2">{{ translate('نوع التوصيل') }}:</div>
+            <ul class="list-unstyled option-buttons">
+                <li>
+                    <input type="radio" id="delivery_company" value="company" name="delivery_type" hidden="" checked>
+                    <label for="delivery_company" class="btn border px-4 mb-0">{{ translate('شركة') }}</label>
+                </li>
+                <li>
+                    <input type="radio" value="self" id="delivery_self" hidden="" name="delivery_type">
+                    <label for="delivery_self" class="btn border px-4 mb-0">{{ translate('ذاتي') }}</label>
+                </li>
+            </ul>
+        </div>
+
+        <div class="my-4">
             <div class="text-dark d-flex mb-2">{{ translate('طريقة الدفع') }}:</div>
             <ul class="list-unstyled option-buttons">
                 <li>

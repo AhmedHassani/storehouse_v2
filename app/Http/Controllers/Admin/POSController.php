@@ -514,9 +514,6 @@ class POSController extends Controller
             if ($request->has('dynamic_fields')) {
                 foreach ($request->dynamic_fields as $field_id => $value) {
                     if ($value !== null) {
-                        if ($field_id == 9 && $value == 'شركه') {
-                            $order->order_type = 'delivery';
-                        }
                         if (is_array($value)) {
                             $value = implode(', ', $value);
                         }
@@ -529,8 +526,8 @@ class POSController extends Controller
                 }
             }
 
-            // Auto-detect delivery if a fee is present
-            if ($delivery_charge > 0) {
+            // Set order type based on the new delivery type toggle or fee
+            if ($request->delivery_type == 'company' || $request->delivery_type == 'self' || $delivery_charge > 0) {
                 $order->order_type = 'delivery';
             }
 
@@ -627,7 +624,7 @@ class POSController extends Controller
             // 9. Boxy Delivery Integration
             $boxy_verified = false;
             // Removed check for business setting and user_id to allow automatic guest orders
-            if ($order->order_type == 'delivery') {
+            if ($order->order_type == 'delivery' && $request->delivery_type == 'company') {
                 try {
                     $boxyService = new \App\Services\BoxyDeliveryService();
                     $boxyResponse = $boxyService->sendOrder($order);
