@@ -9,6 +9,27 @@ use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
+    protected $fillable = [
+        'name',
+        'description',
+        'image',
+        'category_ids',
+        'variations',
+        'add_ons',
+        'attributes',
+        'choice_options',
+        'price',
+        'tax',
+        'status',
+        'discount',
+        'discount_type',
+        'tax_type',
+        'unit',
+        'total_stock',
+        'min_order_qty',
+        'is_unlimited',
+        'is_featured'
+    ];
 
     protected $casts = [
         'tax' => 'float',
@@ -34,9 +55,9 @@ class Product extends Model
         if (is_array($imageUrlArray)) {
             foreach ($imageUrlArray as $key => $item) {
                 if (Storage::disk('public')->exists('product/' . $item)) {
-                    $imageUrlArray[$key] = asset('storage/app/public/product/' . $item);
+                    $imageUrlArray[$key] = asset('storage/product/' . $item);
                 } else {
-                    $imageUrlArray[$key] = asset('public/assets/admin/img/160x160/img2.jpg');
+                    $imageUrlArray[$key] = asset('assets/admin/img/160x160/img2.jpg');
                 }
             }
         }

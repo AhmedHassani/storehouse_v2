@@ -7,15 +7,19 @@
                 <div class="d-flex align-items-center gap-3 py-2 px-3 justify-content-between">
                     @php($logo = Helpers::get_business_settings('logo'))
                     <a class="navbar-brand w-75" href="{{route('admin.dashboard')}}" aria-label="Front">
-                        <img class="navbar-brand-logo" alt="{{ translate('logo') }}" src="{{Helpers::onErrorImage(
+                        <img class="navbar-brand-logo" alt="{{ translate('logo') }}" 
+                            style="max-height: 100px; width: auto; object-fit: contain; transform: scale(1.5);"
+                            src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}">
-                        <img class="navbar-brand-logo-mini" alt="{{ translate('logo') }}" src="{{Helpers::onErrorImage(
+                        <img class="navbar-brand-logo-mini" alt="{{ translate('logo') }}" 
+                            style="max-height: 50px; width: auto; object-fit: contain;"
+                            src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}">
@@ -40,6 +44,7 @@
                     </div>
 
                     <ul class="navbar-nav navbar-nav-lg nav-tabs">
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('dashboard.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin') ? 'show' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link" href="{{route('admin.dashboard')}}"
                                 title="{{translate('Dashboards')}}">
@@ -49,6 +54,7 @@
                                 <i class="tio-home-vs-1-outlined nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
                         <li class="nav-item">
                             <small class="nav-subtitle">إدارة الطلبات</small>
@@ -56,6 +62,7 @@
                         </li>
 
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('pos.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/pos*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link" href="{{route('admin.pos.index')}}">
                                 <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">
@@ -64,8 +71,10 @@
                                 <i class="tio-receipt-outlined nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('order.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/orders*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link " href="javascript:">
                                 <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">
@@ -86,48 +95,79 @@
                                         </span>
                                     </a>
                                 </li>
-                                <li class="nav-item {{Request::is('admin/orders/list/pending') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['pending'])}}" title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/new') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['new'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('pending')}}
+                                            {{translate('new')}}
                                             <span class="badge badge-soft-info badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'pending'])->count()}}
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'new'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
-                                <li class="nav-item {{Request::is('admin/orders/list/confirmed') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['confirmed'])}}" title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/scheduled') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['scheduled'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('confirmed')}}
-                                            <span class="badge badge-soft-success badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'confirmed'])->count()}}
+                                            {{translate('scheduled')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'scheduled'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
-                                <li class="nav-item {{Request::is('admin/orders/list/processing') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['processing'])}}" title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/collecting') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['collecting'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('processing')}}
-                                            <span class="badge badge-soft-warning badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'processing'])->count()}}
+                                            {{translate('collecting')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'collecting'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
-                                <li
-                                    class="nav-item {{Request::is('admin/orders/list/out_for_delivery') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['out_for_delivery'])}}"
-                                        title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/collected') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['collected'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('out_for_delivery')}}
-                                            <span class="badge badge-soft-warning badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'out_for_delivery'])->count()}}
+                                            {{translate('collected')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'collected'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/in-transit') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['in-transit'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('in-transit')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'in-transit'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/on-hold') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['on-hold'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('on-hold')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'on-hold'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/out-for-delivery') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['out-for-delivery'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('out-for-delivery')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'out-for-delivery'])->count()}}
                                             </span>
                                         </span>
                                     </a>
@@ -137,8 +177,41 @@
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
                                             {{translate('delivered')}}
-                                            <span class="badge badge-soft-success badge-pill ml-1">
+                                            <span class="badge badge-soft-info badge-pill ml-1">
                                                 {{\App\Models\Order::notPos()->where(['order_status' => 'delivered'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/partially-delivered') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['partially-delivered'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('partially-delivered')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'partially-delivered'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/returned-warehouse') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['returned-warehouse'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('returned-warehouse')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'returned-warehouse'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/returning-origin') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['returning-origin'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('returning-origin')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'returning-origin'])->count()}}
                                             </span>
                                         </span>
                                     </a>
@@ -148,39 +221,40 @@
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
                                             {{translate('returned')}}
-                                            <span class="badge badge-soft-danger badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'returned'])->count()}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'returned'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
-                                <li class="nav-item {{Request::is('admin/orders/list/failed') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['failed'])}}" title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/partially-returned') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['partially-returned'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('failed')}}
-                                            <span class="badge badge-soft-danger badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'failed'])->count()}}
+                                            {{translate('partially-returned')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'partially-returned'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
-
-                                <li class="nav-item {{Request::is('admin/orders/list/canceled') ? 'active' : ''}}">
-                                    <a class="nav-link " href="{{route('admin.orders.list', ['canceled'])}}" title="">
+                                <li class="nav-item {{Request::is('admin/orders/list/postponed') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['postponed'])}}" title="">
                                         <span class="tio-circle nav-indicator-icon"></span>
                                         <span class="text-truncate">
-                                            {{translate('canceled')}}
-                                            <span class="badge badge-soft-dark badge-pill ml-1">
-                                                {{\App\Models\Order::where(['order_status' => 'canceled'])->count()}}
+                                            {{translate('postponed')}}
+                                            <span class="badge badge-soft-info badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'postponed'])->count()}}
                                             </span>
                                         </span>
                                     </a>
                                 </li>
                             </ul>
                         </li>
+                        @endif
 
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('customer.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/customer/list') || Request::is('admin/customer/view*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -191,7 +265,9 @@
                                 <i class="tio-user nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('deliveryman.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{ Request::is('admin/delivery-man*') ? 'active' : '' }}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link" href="javascript:">
@@ -218,6 +294,7 @@
                                 </li>
                             </ul>
                         </li>
+                        @endif
 
 
 
@@ -228,6 +305,7 @@
                             <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                         </li>
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('category.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/category*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link" href="javascript:">
 
@@ -255,6 +333,7 @@
 
                             </ul>
                         </li>
+                        @endif
 
                         {{-- <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/attribute*') ? 'active' : ''}}">
@@ -267,6 +346,7 @@
                             </a>
                         </li>--}}
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('dynamicfields.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/order-dynamic-fields*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -277,7 +357,9 @@
                                 <i class="tio-layers-outlined nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('product.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/product*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link" href="javascript:">
                                 <span
@@ -317,12 +399,15 @@
                                 </li>
                                 -->
                             </ul>
+                        </li>
+                        @endif
 
                         <li class="nav-item">
                             <small class="nav-subtitle">نظام المشتريات</small>
                             <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                         </li>
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('supplier.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/supplier*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
                                 href="{{route('admin.supplier.add-new')}}">
@@ -332,7 +417,9 @@
                                 <i class="tio-user-big-outlined nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('purchase.view'))
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/purchase*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
                                 href="{{route('admin.purchase.index')}}">
@@ -342,7 +429,9 @@
                                 <i class="tio-receipt-outlined nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('supplierpayment.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/supplier-payment*') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -353,6 +442,7 @@
                                 <i class="tio-money-vs nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
 
                         {{-- <li class="nav-item">
@@ -430,6 +520,7 @@
                             <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                         </li>
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('report.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/report/earning') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -441,7 +532,9 @@
                                 <i class="tio-chart-pie-1 nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('report.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/report/order') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -452,6 +545,7 @@
                                 <i class="tio-chart-bar-2 nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
                         {{-- <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/report/driver-report')?'active':''}}">
@@ -464,6 +558,7 @@
                             </a>
                         </li>--}}
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('report.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/report/product-report') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -474,7 +569,9 @@
                                 <i class="tio-chart-bar-1 nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('report.view'))
                         <li
                             class="navbar-vertical-aside-has-menu {{Request::is('admin/report/sale-report') ? 'active' : ''}}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -485,6 +582,7 @@
                                 <i class="tio-chart-bar-4 nav-icon"></i>
                             </a>
                         </li>
+                        @endif
 
                         <!--
                         <li class="navbar-vertical-aside-has-menu {{Request::is('admin/report/wallet-transaction-history')?'active':''}}">
@@ -724,7 +822,7 @@
                             <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                         </li>
 
-                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('admin.management'))
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('employee.view'))
                             <li class="navbar-vertical-aside-has-menu {{Request::is('admin/management*') ? 'active' : ''}}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
                                     href="{{route('admin.management.index')}}" title="{{translate('Employees')}}">
@@ -736,7 +834,7 @@
                             </li>
                         @endif
 
-                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('system.permissions'))
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('permission.view'))
                             <li class="navbar-vertical-aside-has-menu {{Request::is('admin/permission*') ? 'active' : ''}}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
                                     href="{{route('admin.permission.index')}}" title="{{translate('Permissions')}}">

@@ -50,8 +50,11 @@ $total_tax = 0;
                                             onfocus="storeOldValue(this)" onchange="updateQuantity(event)">
                                     </td>
                                     <td>
-                                        <div class="fs-12">
-                                            {{ Helpers::set_symbol($product_subtotal) }}
+                                        <input type="number" data-key="{{$key}}" class="form-control price" value="{{$cartItem['price']}}"
+                                            min="0" step="0.01"
+                                            onchange="updatePrice(event)">
+                                        <div class="fs-10 text-muted mt-1">
+                                            {{translate('Total')}}: {{ Helpers::set_symbol($product_subtotal) }}
                                         </div>
                                     </td>
                                     <td class="text-center">
@@ -111,10 +114,9 @@ if ($is_free_delivery) {
         </dd>
 
 
-        <dt class="col-6">{{translate('رسوم التوصيل')}} :
-
+        <dt class="col-6 d-none">{{translate('رسوم التوصيل')}} :
         </dt>
-        <dd class="col-6 text-right">
+        <dd class="col-6 text-right d-none">
             <button class="btn btn-sm" type="button" data-toggle="modal" data-target="#delivery-fee-modal">
                 <i class="tio-edit"></i>
             </button>
@@ -130,9 +132,8 @@ if ($is_free_delivery) {
     <form action="{{route('admin.pos.order')}}" id='order_place' method="post">
         @csrf
         {{-- Hidden inputs for delivery --}}
-        <input type="hidden" name="delivery_fee" id="delivery_fee_input" value="{{ $delivery_fee }}">
-        <input type="hidden" name="is_free_delivery" id="is_free_delivery_input"
-            value="{{ $is_free_delivery ? '1' : '0' }}">
+        <input type="hidden" name="fee_customer_payable" id="delivery_fee_input" value="{{ $delivery_fee }}">
+        <input type="hidden" name="is_free_delivery" id="is_free_delivery_input" value="{{ $is_free_delivery ? 1 : 0 }}">
 
         <div class="my-4 p-3 border rounded bg-light">
             <h5 class="mb-3 text-primary"><i class="tio-layers-outlined"></i> {{translate('Dynamic Order Fields')}}</h5>
@@ -232,12 +233,7 @@ if ($is_free_delivery) {
                         </div>
                     @endforeach
                 @endif
-                <div class="col-sm-6">
-                    <div class="form-group mb-2">
-                        <label class="input-label small text-muted">{{translate('تاريخ التوصيل')}}</label>
-                        <input type="date" name="delivery_date" class="form-control form-control-sm">
-                    </div>
-                </div>
+
                 {{--
                 <div class="col-sm-6">
                     <div class="form-group mb-2">
@@ -300,8 +296,10 @@ if ($is_free_delivery) {
                             class="tio-delete-outlined"></i> {{translate('تفريغ السلة')}} </button>
                 </div>
                 <div class="col-sm-6" id="placeOrder">
-                    <button type="submit" class="btn  btn-primary btn-block"><i class="fa fa-shopping-bag"></i>
-                        {{translate('إتمام الطلب')}} </button>
+                    <button type="submit" class="btn btn-primary btn-block" {{ !session()->has('customer_id') || session('customer_id') == '' ? 'disabled' : '' }}>
+                        <i class="fa fa-shopping-bag"></i>
+                        {{translate('إتمام الطلب')}}
+                    </button>
                 </div>
                 <div class="col-sm-6 d-none" id="disablePlaceOrder">
                     <button type="button" class="btn  btn-primary btn-block" disabled data-toggle="tooltip"

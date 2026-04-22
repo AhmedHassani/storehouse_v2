@@ -68,9 +68,11 @@
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('customer.view'))
                                     <a class="btn btn-outline-primary btn-sm square-btn" href="{{route('admin.customer.view',[$customer['id']])}}">
                                         <i class="tio-visible"></i>
                                     </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

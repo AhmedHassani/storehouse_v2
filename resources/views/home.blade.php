@@ -10,7 +10,7 @@
                         <img class="w-200px"
                              src="{{Helpers::onErrorImage(
                             $logo,
-                            asset('storage/app/public/ecommerce').'/' . $logo,
+                            asset('storage/ecommerce').'/' . $logo,
                             asset('assets/admin/img/160x160/img2.jpg') ,
                             'ecommerce/')}}"
                              alt="{{ translate('logo') }}">

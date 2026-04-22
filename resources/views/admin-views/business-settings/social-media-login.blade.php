@@ -60,7 +60,7 @@
                                 <div class="form-group">
                                     <label class="form-label">{{translate('service_file')}} {{ $appleLoginService['service_file']?translate('(Already Exists)'):'' }}</label>
                                     <input type="file" accept=".p8" class="form-control" name="service_file"
-                                           value="{{ 'storage/app/public/apple-login/'.$appleLoginService['service_file'] }}">
+                                           value="{{ 'storage/apple-login/'.$appleLoginService['service_file'] }}">
                                 </div>
                             </div>
                         </div>

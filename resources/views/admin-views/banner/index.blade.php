@@ -11,6 +11,7 @@
             </h2>
         </div>
 
+        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('marketing.add'))
         <div class="card">
             <div class="card-body">
                 <form action="{{route('admin.banner.store')}}" method="post" enctype="multipart/form-data">
@@ -124,6 +125,7 @@
                 </form>
             </div>
         </div>
+        @endif
 
         <div class="card mt-3">
             <div class="px-20 py-3">
@@ -178,29 +180,39 @@
                             <td>{{$banner['title']}}</td>
                             <td>{{$banner['banner_type']}}</td>
                             <td>
-                                @if($banner['status']==1)
-                                    <label class="switcher">
-                                        <input type="checkbox" class="switcher_input change-status" checked
-                                               data-route="{{route('admin.banner.status',[$banner['id'],0])}}">
-                                        <span class="switcher_control"></span>
-                                    </label>
+                                @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('marketing.edit'))
+                                    @if($banner['status']==1)
+                                        <label class="switcher">
+                                            <input type="checkbox" class="switcher_input change-status" checked
+                                                   data-route="{{route('admin.banner.status',[$banner['id'],0])}}">
+                                            <span class="switcher_control"></span>
+                                        </label>
+                                    @else
+                                        <label class="switcher">
+                                            <input type="checkbox" class="switcher_input change-status"
+                                                   data-route="{{route('admin.banner.status',[$banner['id'],1])}}">
+                                            <span class="switcher_control"></span>
+                                        </label>
+                                    @endif
                                 @else
-                                    <label class="switcher">
-                                        <input type="checkbox" class="switcher_input change-status"
-                                               data-route="{{route('admin.banner.status',[$banner['id'],1])}}">
-                                        <span class="switcher_control"></span>
-                                    </label>
+                                    <span class="badge badge-soft-{{$banner['status'] == 1 ? 'success' : 'danger'}}">
+                                        {{$banner['status'] == 1 ? translate('active') : translate('inactive')}}
+                                    </span>
                                 @endif
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('marketing.edit'))
                                     <a class="btn btn-outline-info square-btn"
                                         href="{{route('admin.banner.edit',[$banner['id']])}}"><i class="tio tio-edit"></i></a>
+                                    @endif
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('marketing.delete'))
                                     <a class="btn btn-outline-danger square-btn form-alert" href="javascript:"
                                        data-id="banner-{{$banner['id']}}"
                                        data-message="{{translate('Want to delete this banner ?')}}">
                                         <i class="tio tio-delete"></i>
                                     </a>
+                                    @endif
                                 </div>
                                 <form action="{{route('admin.banner.delete',[$banner['id']])}}"
                                         method="post" id="banner-{{$banner['id']}}">

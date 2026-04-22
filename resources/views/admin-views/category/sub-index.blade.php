@@ -15,6 +15,7 @@
             </h2>
         </div>
 
+        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('category.add'))
         <div class="card">
             <div class="card-body">
                 <form action="{{route('admin.category.store')}}" method="post">
@@ -73,6 +74,9 @@
                             </div>
                         </div>
                 </form>
+            </div>
+        </div>
+        @endif
 
                 <div class="card mt-3">
                     <div class="px-20 py-3">
@@ -120,30 +124,39 @@
                                     <td>{{$category->parent['name']}}</td>
                                     <td>{{$category['name']}}</td>
                                     <td>
-                                        @if($category['status']==1)
-                                            <label class="switcher">
-                                                <input type="checkbox" class="switcher_input change-status" {{$category['status']==1? 'checked' : ''}} id="{{$category['id']}}"
-                                                       data-route="{{route('admin.category.status',[$category['id'],0])}}">
-                                                <span class="switcher_control"></span>
-                                            </label>
+                                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('category.edit'))
+                                            @if($category['status']==1)
+                                                <label class="switcher">
+                                                    <input type="checkbox" class="switcher_input change-status" {{$category['status']==1? 'checked' : ''}} id="{{$category['id']}}"
+                                                           data-route="{{route('admin.category.status',[$category['id'],0])}}">
+                                                    <span class="switcher_control"></span>
+                                                </label>
+                                            @else
+                                                <label class="switcher">
+                                                    <input type="checkbox" class="switcher_input change-status" {{$category['status']==1? 'checked' : ''}} id="{{$category['id']}}"
+                                                           data-route="{{route('admin.category.status',[$category['id'],1])}}">
+                                                    <span class="switcher_control"></span>
+                                                </label>
+                                            @endif
                                         @else
-                                            <label class="switcher">
-                                                <input type="checkbox" class="switcher_input change-status" {{$category['status']==1? 'checked' : ''}} id="{{$category['id']}}"
-                                                       data-route="{{route('admin.category.status',[$category['id'],1])}}">
-                                                <span class="switcher_control"></span>
-                                            </label>
+                                            <span class="badge badge-soft-{{$category['status'] == 1 ? 'success' : 'danger'}}">
+                                                {{$category['status'] == 1 ? translate('active') : translate('inactive')}}
+                                            </span>
                                         @endif
-
                                     </td>
                                     <td>
                                         <div class="d-flex justify-content-center gap-2">
+                                            @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('category.edit'))
                                             <a class="btn btn-outline-info square-btn"
                                                 href="{{route('admin.category.edit',[$category['id']])}}"><i class="tio tio-edit"></i></a>
+                                            @endif
+                                            @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('category.delete'))
                                             <a class="btn btn-outline-danger square-btn form-alert" href="javascript:"
                                                data-id="category-{{$category['id']}}"
                                                data-message="{{translate('Want to delete this ?')}}">
                                                <i class="tio tio-delete"></i>
                                             </a>
+                                            @endif
                                         </div>
                                         <form action="{{route('admin.category.delete',[$category['id']])}}"
                                                 method="post" id="category-{{$category['id']}}">

@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>@yield('title')</title>
     @php($icon = \App\Models\BusinessSetting::where(['key' => 'fav_icon'])->first()->value)
-    <link rel="icon" type="image/x-icon" href="{{ asset('storage/app/public/ecommerce/' . $icon ?? '') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/ecommerce/' . $icon ?? '') }}">
     <link rel="shortcut icon" href="">
     {{--
     <link rel="stylesheet" href="{{asset('assets/admin/css/font/open-sans.css')}}"> --}}

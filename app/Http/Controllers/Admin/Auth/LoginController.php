@@ -57,7 +57,7 @@ class LoginController extends Controller
         $logo = Helpers::onErrorImage(
             $logo,
             asset('storage/app/public/ecommerce') . '/' . $logo,
-            asset('public/assets/admin/img/160x160/img2.jpg'),
+            asset('assets/admin/img/160x160/img2.jpg'),
             'ecommerce/'
         );
 

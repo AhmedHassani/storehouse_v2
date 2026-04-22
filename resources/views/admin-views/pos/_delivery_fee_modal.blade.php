@@ -24,7 +24,7 @@
 
                     <div class="form-group" id="delivery_fee_amount_group">
                         <label for="delivery_fee_amount">{{translate('قيمة رسوم التوصيل')}}</label>
-                        <input type="number" class="form-control" id="delivery_fee_amount" name="delivery_fee" min="0"
+                        <input type="number" class="form-control" id="delivery_fee_amount" name="fee_customer_payable" min="0"
                             step="0.01" value="0" placeholder="{{translate('أدخل قيمة رسوم التوصيل')}}">
                         <small class="text-muted">{{translate('اترك فارغاً للتوصيل المجاني')}}</small>
                     </div>
@@ -53,4 +53,26 @@
             amountGroup.style.display = 'block';
         }
     }
+
+    $('#delivery-fee-form').on('submit', function (e) {
+        e.preventDefault();
+        $.post({
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            beforeSend: function () {
+                $('#loading').show();
+            },
+            success: function (data) {
+                $('#delivery-fee-modal').modal('hide');
+                updateCart();
+                toastr.success(data.message, {
+                    CloseButton: true,
+                    ProgressBar: true
+                });
+            },
+            complete: function () {
+                $('#loading').hide();
+            }
+        });
+    });
 </script>

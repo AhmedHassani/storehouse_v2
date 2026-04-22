@@ -138,9 +138,9 @@
                                 <td>{{Str::limit($payment['notes'], 50)}}</td>
                                 <td>
                                     @if($payment['image'])
-                                        <a href="{{asset('storage/app/public/supplier_payment/' . $payment['image'])}}"
+                                        <a href="{{asset('storage/supplier_payment/' . $payment['image'])}}"
                                             target="_blank">
-                                            <img src="{{asset('storage/app/public/supplier_payment/' . $payment['image'])}}"
+                                            <img src="{{asset('storage/supplier_payment/' . $payment['image'])}}"
                                                 width="40" height="40" class="rounded" alt="">
                                         </a>
                                     @endif

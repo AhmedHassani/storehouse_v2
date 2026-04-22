@@ -137,18 +137,18 @@
                                 @endif
                             </td>
                             <td class="text-capitalize">
-                                @if($order['order_status']=='pending')
-                                    <span class="badge badge-soft-info">{{translate('pending')}}</span>
-                                @elseif($order['order_status']=='confirmed')
-                                    <span class="badge badge-soft-info">{{translate('confirmed')}}</span>
-                                @elseif($order['order_status']=='processing')
+                                @if($order['order_status']=='new')
+                                    <span class="badge badge-soft-info">{{translate('new')}}</span>
+                                @elseif($order['order_status']=='scheduled')
+                                    <span class="badge badge-soft-info">{{translate('scheduled')}}</span>
+                                @elseif(in_array($order['order_status'], ['collecting', 'collected', 'in-transit']))
                                     <span class="badge badge-soft-warning">{{translate('processing')}}</span>
-                                @elseif($order['order_status']=='picked_up')
+                                @elseif($order['order_status']=='out-for-delivery')
                                     <span class="badge badge-soft-warning">{{translate('out_for_delivery')}}</span>
                                 @elseif($order['order_status']=='delivered')
                                     <span class="badge badge-soft-success">{{translate('delivered')}}</span>
                                 @else
-                                    <span class="badge badge-soft-danger">{{str_replace('_',' ',$order['order_status'])}}</span>
+                                    <span class="badge badge-soft-danger">{{str_replace('-',' ',$order['order_status'])}}</span>
                                 @endif
                             </td>
                             <td class="text-capitalize">

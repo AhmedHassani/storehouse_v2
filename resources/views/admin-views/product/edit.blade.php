@@ -282,7 +282,7 @@
                                                                 <div class="col-3">
                                                                     <img class="w-100 h-200px" src="{{Helpers::onErrorImage(
                                         $img,
-                                        asset('storage/app/public/product') . '/' . $img,
+                                        asset('storage/product') . '/' . $img,
                                         asset('assets/admin/img/160x160/img2.jpg'),
                                         'product/'
                                     )}}" alt="{{ translate('product') }}">

@@ -21,15 +21,15 @@
             <div class="navbar-brand-wrapper">
                 @php($logo = Helpers::get_business_settings('logo'))
                 <a class="navbar-brand" href="{{route('admin.dashboard')}}" aria-label="">
-                    <img class="navbar-brand-logo" src="{{Helpers::onErrorImage(
+                    <img class="navbar-brand-logo" style="width: 140px; height: auto; max-height: 100px; object-fit: contain;" src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{ translate('Logo') }}">
-                    <img class="navbar-brand-logo-mini" src="{{Helpers::onErrorImage(
+                    <img class="navbar-brand-logo-mini" style="width: 140px; height: auto; max-height: 100px; object-fit: contain;" src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{ translate('Logo') }}">

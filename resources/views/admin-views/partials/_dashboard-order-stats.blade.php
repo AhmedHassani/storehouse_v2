@@ -1,32 +1,32 @@
 <div class="col-sm-6 col-lg-3">
-    <a class="dashboard--card" href="{{route('admin.orders.list',['pending'])}}">
-        <h5 class="dashboard--card__subtitle">{{translate('pending')}}</h5>
-        <h2 class="dashboard--card__title">{{$data['pending']}}</h2>
-        <img width="30" src="{{asset('assets/admin/img/icons/pending.png')}}" class="dashboard--card__img" alt="{{ translate('pending') }}">
+    <a class="dashboard--card" href="{{route('admin.orders.list',['new'])}}">
+        <h5 class="dashboard--card__subtitle">{{translate('new')}}</h5>
+        <h2 class="dashboard--card__title">{{$data['new']}}</h2>
+        <img width="30" src="{{asset('assets/admin/img/icons/pending.png')}}" class="dashboard--card__img" alt="{{ translate('new') }}">
     </a>
 </div>
 
 <div class="col-sm-6 col-lg-3">
-    <a class="dashboard--card" href="{{route('admin.orders.list',['confirmed'])}}">
-        <h5 class="dashboard--card__subtitle">{{translate('confirmed')}}</h5>
-        <h2 class="dashboard--card__title">{{$data['confirmed']}}</h2>
-        <img width="30" src="{{asset('assets/admin/img/icons/confirmed.png')}}" class="dashboard--card__img" alt="{{ translate('confirmed') }}">
+    <a class="dashboard--card" href="{{route('admin.orders.list',['scheduled'])}}">
+        <h5 class="dashboard--card__subtitle">{{translate('scheduled')}}</h5>
+        <h2 class="dashboard--card__title">{{$data['scheduled']}}</h2>
+        <img width="30" src="{{asset('assets/admin/img/icons/confirmed.png')}}" class="dashboard--card__img" alt="{{ translate('scheduled') }}">
     </a>
 </div>
 
 <div class="col-sm-6 col-lg-3">
-    <a class="dashboard--card" href="{{route('admin.orders.list',['processing'])}}">
-        <h5 class="dashboard--card__subtitle">{{translate('packaging')}}</h5>
-        <h2 class="dashboard--card__title">{{$data['processing']}}</h2>
-        <img width="30" src="{{asset('assets/admin/img/icons/packaging.png')}}" class="dashboard--card__img" alt="{{ translate('packaging') }}">
+    <a class="dashboard--card" href="{{route('admin.orders.list',['in-transit'])}}">
+        <h5 class="dashboard--card__subtitle">{{translate('in-transit')}}</h5>
+        <h2 class="dashboard--card__title">{{$data['in-transit']}}</h2>
+        <img width="30" src="{{asset('assets/admin/img/icons/packaging.png')}}" class="dashboard--card__img" alt="{{ translate('in-transit') }}">
     </a>
 </div>
 
 <div class="col-sm-6 col-lg-3">
-    <a class="dashboard--card" href="{{route('admin.orders.list',['out_for_delivery'])}}">
+    <a class="dashboard--card" href="{{route('admin.orders.list',['out-for-delivery'])}}">
         <h5 class="dashboard--card__subtitle">{{translate('out_for_delivery')}}</h5>
-        <h2 class="dashboard--card__title">{{$data['out_for_delivery']}}</h2>
-        <img width="30" src="{{asset('assets/admin/img/icons/out_for_delivery.png')}}" class="dashboard--card__img" alt="{{ translate('Out For delivery') }}">
+        <h2 class="dashboard--card__title">{{$data['out-for-delivery']}}</h2>
+        <img width="30" src="{{asset('assets/admin/img/icons/out_for_delivery.png')}}" class="dashboard--card__img" alt="{{ translate('out-for-delivery') }}">
     </a>
 </div>
 
@@ -42,12 +42,12 @@
 </div>
 
 <div class="col-sm-6 col-lg-3">
-    <a class="order-stats" href="{{route('admin.orders.list',['canceled'])}}">
+    <a class="order-stats" href="{{route('admin.orders.list',['postponed'])}}">
         <div class="order-stats__content">
-            <img width="20" src="{{asset('assets/admin/img/icons/cancel.png')}}" class="order-stats__img" alt="{{ translate('delivered') }}">
-            <h6 class="order-stats__subtitle">{{ translate('canceled') }}</h6>
+            <img width="20" src="{{asset('assets/admin/img/icons/cancel.png')}}" class="order-stats__img" alt="{{ translate('postponed') }}">
+            <h6 class="order-stats__subtitle">{{ translate('postponed') }}</h6>
         </div>
-        <span class="order-stats__title">{{$data['canceled']}}</span>
+        <span class="order-stats__title">{{$data['postponed']}}</span>
     </a>
 </div>
 
@@ -62,11 +62,11 @@
 </div>
 
 <div class="col-sm-6 col-lg-3">
-    <a class="order-stats" href="{{route('admin.orders.list',['failed'])}}">
+    <a class="order-stats" href="{{route('admin.orders.list',['on-hold'])}}">
         <div class="order-stats__content">
-            <img width="20" src="{{asset('assets/admin/img/icons/failed_to_deliver.png')}}" class="order-stats__img" alt="{{ translate('failed to deliver') }}">
-            <h6 class="order-stats__subtitle">{{translate('failed_to_delivered')}}</h6>
+            <img width="20" src="{{asset('assets/admin/img/icons/failed_to_deliver.png')}}" class="order-stats__img" alt="{{ translate('on-hold') }}">
+            <h6 class="order-stats__subtitle">{{translate('on-hold')}}</h6>
         </div>
-        <span class="order-stats__title text-danger">{{$data['failed']}}</span>
+        <span class="order-stats__title text-danger">{{$data['on-hold']}}</span>
     </a>
 </div>

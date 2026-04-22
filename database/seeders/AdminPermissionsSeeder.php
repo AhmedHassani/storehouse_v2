@@ -29,6 +29,9 @@ class AdminPermissionsSeeder extends Seeder
             'SupplierPayment' => ['view', 'add', 'delete'],
             'Employee' => ['view', 'add', 'edit', 'delete'], // Admin Management
             'Permission' => ['view', 'add', 'edit', 'delete'],
+            'DeliveryMan' => ['view', 'add', 'edit', 'delete'],
+            'DynamicFields' => ['view', 'add', 'edit', 'delete'],
+            'Marketing' => ['view', 'add', 'edit', 'delete'], // For banners, coupons, flash sales
             'Report' => ['view'],
             'Settings' => ['view', 'edit'],
         ];

@@ -101,8 +101,8 @@
                                 <span class="text-dark font-weight-bold">{{translate('الإيصال')}}:</span>
                             </div>
                             <div class="text-center">
-                                <a href="{{asset('storage/app/public/purchase/' . $purchase->image)}}" target="_blank">
-                                    <img src="{{asset('storage/app/public/purchase/' . $purchase->image)}}"
+                                <a href="{{asset('storage/purchase/' . $purchase->image)}}" target="_blank">
+                                    <img src="{{asset('storage/purchase/' . $purchase->image)}}"
                                         class="img-fluid rounded" style="max-height: 200px" alt="receipt">
                                 </a>
                             </div>

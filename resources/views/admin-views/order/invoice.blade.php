@@ -32,7 +32,7 @@
                 <div class="col-12 text-center mb-3">
                     <img width="150" src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{  translate('logo') }}">
@@ -170,7 +170,7 @@
             <div class="row mt-4">
                 <div class="col-12 text-center">
                     <div style="padding: 10px; display: inline-block;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ $order['id'] }}"
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ $order['boxy_uid'] }}"
                             alt="QR Code">
                         <div style="font-size: 10px; margin-top: 5px;">{{ translate('Scan for order details') }}</div>
                     </div>

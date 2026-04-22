@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
     @php($icon = Helpers::get_business_settings('fav_icon'))
-    <link rel="icon" type="image/x-icon" href="{{ asset('storage/app/public/ecommerce/' . $icon ?? '') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/ecommerce/' . $icon ?? '') }}">
     {{--
     <link rel="stylesheet" href="{{asset('assets/admin/css/font/open-sans.css')}}"> --}}
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap"

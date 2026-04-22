@@ -149,7 +149,7 @@ class OrderController extends Controller
                 'coupon_discount_amount' => $request->coupon_discount_amount,
                 'coupon_discount_title' => $request->coupon_discount_title == 0 ? null : 'coupon_discount_title',
                 'payment_status' => $request->payment_method == 'cash_on_delivery' ? 'unpaid' : 'paid',
-                'order_status' => $request->payment_method == 'cash_on_delivery' ? 'pending' : 'confirmed',
+                'order_status' => 'new',
                 'coupon_code' => $request['coupon_code'],
                 'payment_method' => $request->payment_method,
                 'transaction_reference' => $request->transaction_reference ?? null,
@@ -245,7 +245,7 @@ class OrderController extends Controller
                 $guest = GuestUser::find(config('guest_id'));
                 $fcmToken = $guest ? $guest->fcm_token : '';
             }
-            $value = Helpers::order_status_update_message('pending');
+            $value = Helpers::order_status_update_message('new');
             try {
                 if ($value) {
                     $data = [
@@ -381,8 +381,8 @@ class OrderController extends Controller
             return response()->json(['errors' => [['code' => 'order', 'message' => 'Order not found!']]], 404);
         }
 
-        if ($order->order_status != 'pending') {
-            return response()->json(['errors' => [['code' => 'order', 'message' => 'Order can only cancel when order status is pending!']]], 403);
+        if ($order->order_status != 'new') {
+            return response()->json(['errors' => [['code' => 'order', 'message' => 'Order can only cancel when order status is new!']]], 403);
         }
 
         $userId = auth('api')->user() ? auth('api')->user()->id : config('guest_id');

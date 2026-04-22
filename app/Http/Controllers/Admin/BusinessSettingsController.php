@@ -50,13 +50,13 @@ class BusinessSettingsController extends Controller
         }
 
         $logo = Helpers::get_business_settings('logo');
-        $logo = Helpers::onErrorImage($logo, asset('storage/app/public/ecommerce') . '/' . $logo, asset('public/assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
+        $logo = Helpers::onErrorImage($logo, asset('storage/app/public/ecommerce') . '/' . $logo, asset('assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
 
         $app_logo = Helpers::get_business_settings('app_logo');
-        $app_logo = Helpers::onErrorImage($app_logo, asset('storage/app/public/ecommerce') . '/' . $app_logo, asset('public/assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
+        $app_logo = Helpers::onErrorImage($app_logo, asset('storage/app/public/ecommerce') . '/' . $app_logo, asset('assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
 
         $fav_icon = Helpers::get_business_settings('fav_icon');
-        $fav_icon = Helpers::onErrorImage($fav_icon, asset('storage/app/public/ecommerce') . '/' . $fav_icon, asset('public/assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
+        $fav_icon = Helpers::onErrorImage($fav_icon, asset('storage/app/public/ecommerce') . '/' . $fav_icon, asset('assets/admin/img/160x160/img2.jpg'), 'ecommerce/');
 
         return view('admin-views.business-settings.ecom-setup', compact('logo', 'app_logo', 'fav_icon'));
     }

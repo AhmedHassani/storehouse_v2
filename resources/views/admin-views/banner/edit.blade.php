@@ -81,7 +81,7 @@
                                             <img
                                                   src="{{Helpers::onErrorImage(
                                                             $banner['image'],
-                                                            asset('storage/app/public/banner').'/' . $banner['image'],
+                                                            asset('storage/banner').'/' . $banner['image'],
                                                             asset('assets/admin/img/ratio/2_1.png') ,
                                                             'banner/')}}"
                                                   class="w-100" alt="{{ translate('banner') }}">
@@ -112,7 +112,7 @@
                                             <img
                                                 src="{{Helpers::onErrorImage(
                                                             $banner['image'],
-                                                            asset('storage/app/public/banner').'/' . $banner['image'],
+                                                            asset('storage/banner').'/' . $banner['image'],
                                                             asset('assets/admin/img/ratio/1_1.png') ,
                                                             'banner/')}}"
                                                   class="w-100" alt="{{ translate('banner') }}">

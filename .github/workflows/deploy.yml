@@ -1,0 +1,36 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main # يتم التشغيل عند الرفع على فرع main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script: |
+            # 1. انتقل إلى مجلد المشروع على السيرفر (قم بتغيير المسار إذا كان مختلفاً)
+            cd /var/www/scouters
+            
+            # 2. اسحب أحدث التعديلات من GitHub
+            git pull origin main
+            
+            # 3. تحديث الحزم (في حال وجود تعديلات في composer.json)
+            composer install --no-interaction --prefer-dist --optimize-autoloader
+            
+            # 4. تنفيذ أوامر قواعد البيانات إن وجدت
+            php artisan migrate --force
+            
+            # 5. تنظيف الكاش
+            php artisan optimize:clear

@@ -6,7 +6,7 @@
 
     <title>{{ translate('Error 500') }} | {{ Helpers::get_business_settings('restaurant_name') }}</title>
     @php($icon = \App\Models\BusinessSetting::where(['key' => 'fav_icon'])->first()->value)
-    <link rel="icon" type="image/x-icon" href="{{ asset('storage/app/public/ecommerce/' . $icon ?? '') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/ecommerce/' . $icon ?? '') }}">
     <link rel="stylesheet" href="{{asset('assets/admin/css/font/open-sans.css')}}">
     <link rel="stylesheet" href="{{asset('assets/admin/css/vendor.min.css')}}">
     <link rel="stylesheet" href="{{asset('assets/admin/vendor/icon-set/style.css')}}">

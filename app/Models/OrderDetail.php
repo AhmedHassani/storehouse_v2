@@ -6,6 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderDetail extends Model
 {
+    protected $fillable = [
+        'product_id',
+        'order_id',
+        'price',
+        'discount_on_product',
+        'discount_type',
+        'quantity',
+        'tax_amount',
+        'variant',
+        'variation',
+        'add_on_ids',
+        'add_on_qtys',
+        'add_on_prices',
+        'add_on_taxes',
+        'unit',
+        'is_stock_decreased'
+    ];
+
     protected $casts = [
         'product_id' => 'integer',
         'order_id' => 'integer',

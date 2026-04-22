@@ -1003,7 +1003,7 @@ dt {
 }
 
 [dir="rtl"] .nav-subtitle {
-    padding-right: 1.5rem;
+    padding-right: 1rem;
     padding-left: 0;
     text-align: right;
 }
@@ -1011,7 +1011,7 @@ dt {
 [dir="rtl"] .nav-link {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
 }
 
 /* Sidebar Polish */
@@ -1079,15 +1079,16 @@ dt {
     border-left: 1px solid #e7eaf3 !important;
     border-right: none !important;
     transform: none !important;
+    width: 21rem !important;
 }
 
 [dir="rtl"] .main {
-    margin-right: 0!important;
+    margin-right: 0 !important;
     margin-left: 0 !important;
 }
 
 [dir="rtl"] .navbar-fixed.navbar-container {
-    margin-right: 16.25rem !important;
+    margin-right: 18.5rem !important;
     margin-left: 0 !important;
 }
 
@@ -1098,10 +1099,37 @@ dt {
     margin-left: 0 !important;
 }
 
+[dir="rtl"] .navbar-vertical-aside-show .main,
+[dir="rtl"] .navbar-vertical-aside-show-sm .main,
+[dir="rtl"] .navbar-vertical-aside-show-md .main,
+[dir="rtl"] .navbar-vertical-aside-show-lg .main,
+[dir="rtl"] .navbar-vertical-aside-show-xl .main {
+    padding-right: 21rem !important;
+    padding-left: 0 !important;
+}
+
+[dir="rtl"] .navbar-vertical-aside-show .footer,
+[dir="rtl"] .navbar-vertical-aside-show-sm .footer,
+[dir="rtl"] .navbar-vertical-aside-show-md .footer,
+[dir="rtl"] .navbar-vertical-aside-show-lg .footer,
+[dir="rtl"] .navbar-vertical-aside-show-xl .footer {
+    margin-right: 21rem !important;
+    margin-left: 0 !important;
+}
+
+[dir="rtl"] .navbar-vertical-aside-show .navbar:not(.navbar-vertical),
+[dir="rtl"] .navbar-vertical-aside-show-sm .navbar:not(.navbar-vertical),
+[dir="rtl"] .navbar-vertical-aside-show-md .navbar:not(.navbar-vertical),
+[dir="rtl"] .navbar-vertical-aside-show-lg .navbar:not(.navbar-vertical),
+[dir="rtl"] .navbar-vertical-aside-show-xl .navbar:not(.navbar-vertical) {
+    margin-right: 21rem !important;
+    margin-left: 0 !important;
+}
+
 /* Mobile RTL Sidebar */
 @media (max-width: 1199.98px) {
     [dir="rtl"] .navbar-vertical-aside {
-        right: -16.25rem !important;
+        right: -21rem !important;
     }
 
     [dir="rtl"] .navbar-vertical-aside-show .navbar-vertical-aside {
@@ -1150,4 +1178,121 @@ dt {
     display: none;
 }
 
+
 /*# sourceMappingURL=style.css.map */
+
+/* ============================================
+   POS Billing Section — Professional Redesign
+   ============================================ */
+
+.pos-title {
+    background: #334257 !important; /* System Dark Color */
+    padding: 18px 24px !important;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+}
+
+.pos-title h4 {
+    color: #fff !important;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* --- Price & Quantity Harmonization --- */
+input.qty, 
+input.price {
+    height: 40px !important;
+    width: 100px !important; /* Unified width for both */
+    border-radius: 8px !important;
+    text-align: center !important;
+    border: 1px solid #ced4da !important;
+    font-weight: 700 !important;
+    background: #ffffff !important;
+    color: #334257 !important;
+    padding: 0 !important;
+    line-height: 40px !important;
+    display: block !important;
+    margin: 0 auto !important;
+    vertical-align: middle !important;
+    transition: all 0.2s ease !important;
+}
+
+input.qty:focus,
+input.price:focus {
+    border-color: #334257 !important;
+    box-shadow: 0 0 0 3px rgba(51, 66, 87, 0.1) !important;
+    outline: none !important;
+}
+
+/* Hide arrows */
+input.qty::-webkit-outer-spin-button,
+input.qty::-webkit-inner-spin-button,
+input.price::-webkit-outer-spin-button,
+input.price::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input.qty, 
+input.price {
+    -moz-appearance: textfield;
+}
+
+.pos-cart-table {
+    border: 1px solid #e9ecef !important;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pos-cart-table thead th {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    font-weight: 600;
+    padding: 10px !important;
+    text-align: center !important;
+}
+
+.pos-cart-table td {
+    vertical-align: middle !important;
+    padding: 15px 8px 25px 8px !important; /* Extra bottom padding for label */
+    position: relative;
+}
+
+.pos-cart-table td:nth-child(2),
+.pos-cart-table td:nth-child(3) {
+    text-align: center !important;
+}
+
+.pos-cart-table .fs-10.text-muted {
+    font-size: 0.7rem !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    margin: 0 !important;
+}
+
+/* Delete button styling */
+.pos-cart-table .btn-outline-danger {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.pos-cart-bottom-btns .btn-primary {
+    background: #334257 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    height: 48px;
+    font-weight: 700;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+}

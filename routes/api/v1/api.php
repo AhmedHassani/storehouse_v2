@@ -18,7 +18,8 @@ use App\Http\Controllers\Api\V1\{
     WishlistController,
     OrderController,
     GuestUserController,
-    ConfigController
+    ConfigController,
+    BoxyWebhookController
 };
 use App\Http\Controllers\Api\V1\Auth\{
     CustomerAuthController,
@@ -206,3 +207,6 @@ Route::group(['middleware' => 'localization'], function () {
     });
 
 });
+
+// Boxy Webhook (Moved outside localization to avoid 404/prefix issues)
+Route::post('boxy/webhook', [BoxyWebhookController::class, 'handle'])->middleware('throttle:60,1');

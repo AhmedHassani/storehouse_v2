@@ -108,6 +108,8 @@ class ProductController extends Controller
         $search = $request['search'];
         $stock_filter = $request['stock_filter']; // all, in_stock, out_of_stock, low_stock
         $status_filter = $request['status_filter']; // all, active, inactive
+        $category_id = $request['category_id'];
+        $sub_category_id = $request['sub_category_id'];
 
         if ($request->has('search')) {
             $key = explode(' ', $request['search']);
@@ -120,6 +122,18 @@ class ProductController extends Controller
             $queryParam = ['search' => $request['search']];
         } else {
             $query = $this->product;
+        }
+
+        // Category filter
+        if ($category_id && $category_id != 'all') {
+            $query = $query->whereJsonContains('category_ids', [['id' => (string)$category_id, 'position' => 1]]);
+            $queryParam['category_id'] = $category_id;
+        }
+
+        // Subcategory filter
+        if ($sub_category_id && $sub_category_id != 'all') {
+            $query = $query->whereJsonContains('category_ids', [['id' => (string)$sub_category_id, 'position' => 2]]);
+            $queryParam['sub_category_id'] = $sub_category_id;
         }
 
         // Stock filter
@@ -145,8 +159,9 @@ class ProductController extends Controller
         }
 
         $products = $query->latest()->paginate(Helpers::pagination_limit())->appends($queryParam);
+        $categories = $this->category->where(['position' => 0])->get();
 
-        return view('admin-views.product.list', compact('products', 'search', 'stock_filter', 'status_filter'));
+        return view('admin-views.product.list', compact('products', 'search', 'stock_filter', 'status_filter', 'categories', 'category_id', 'sub_category_id'));
     }
 
     /**

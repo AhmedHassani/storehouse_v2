@@ -26,9 +26,11 @@
                         </div>
                     </div>
                 </form>
+                @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('delivery_man.add'))
                 <a href="{{route('admin.delivery-man.add')}}" class="btn btn-primary">
                     <i class="tio-add"></i>{{translate('add')}}{{translate('deliveryman')}}
                 </a>
+                @endif
             </div>
 
             <div class="table-responsive datatable-custom">
@@ -61,13 +63,17 @@
                             </td>
                             <td>
                                 <div class="d-flex justify-content-center align-items-center gap-10">
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('delivery_man.edit'))
                                     <a class="btn btn-outline-primary square-btn"
                                         href="{{route('admin.delivery-man.edit',[$dm['id']])}}"><i class="tio-edit"></i></a>
+                                    @endif
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('delivery_man.delete'))
                                     <a class="btn btn-outline-danger square-btn form-alert" href="javascript:"
                                        data-id="delivery-man-{{$dm['id']}}"
                                        data-message="{{translate('Want to delete this deliveryman ?')}}">
                                         <i class="tio-delete"></i>
                                     </a>
+                                    @endif
                                 </div>
                                 <form action="{{route('admin.delivery-man.delete',[$dm['id']])}}"
                                         method="post" id="delivery-man-{{$dm['id']}}">

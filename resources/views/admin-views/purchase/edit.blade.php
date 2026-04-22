@@ -175,7 +175,7 @@
                                         </div>
                                         <div class="text-center mt-3">
                                             <img style="height: 200px;border: 1px solid; border-radius: 10px;" id="viewer"
-                                                src="{{$purchase->image ? asset('storage/app/public/purchase/' . $purchase->image) : asset('assets/admin/img/400x400/img2.jpg')}}"
+                                                src="{{$purchase->image ? asset('storage/purchase/' . $purchase->image) : asset('assets/admin/img/400x400/img2.jpg')}}"
                                                 alt="receipt image" />
                                         </div>
                                     </div>

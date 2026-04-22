@@ -397,7 +397,7 @@ class POSController extends Controller
         $order->user_id = session()->has('customer_id') ? session('customer_id') : null;
         $order->coupon_discount_title = $request->coupon_discount_title == 0 ? null : 'coupon_discount_title';
         $order->payment_status = 'paid';
-        $order->order_status = 'delivered';
+        $order->order_status = 'new';
         $order->order_type = 'pos';
         $order->paid_amount = $request->paid_amount;
         $order->coupon_code = $request->coupon_code ?? null;
@@ -525,7 +525,7 @@ class POSController extends Controller
             if ($order->user_id != null) {
                 $user = User::find($order->user_id);
                 $fcmToken = $user?->cm_firebase_token;
-                $value = Helpers::order_status_update_message('delivered');
+                $value = Helpers::order_status_update_message('new');
                 try {
                     if ($value && $fcmToken != null) {
                         $data = [

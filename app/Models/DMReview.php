@@ -26,7 +26,7 @@ class DMReview extends Model
                 if (Storage::disk('public')->exists('review/' . $item)) {
                     $imageUrlArray[$key] = asset('storage/app/public/review/'. $item) ;
                 } else {
-                    $imageUrlArray[$key] = asset('public/assets/admin/img/400x400/img2.jpg');
+                    $imageUrlArray[$key] = asset('assets/admin/img/400x400/img2.jpg');
                 }
             }
         }

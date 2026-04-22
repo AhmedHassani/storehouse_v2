@@ -159,119 +159,45 @@ class SystemController extends Controller
         $from = session()->has('stats_from') ? session('stats_from') : null;
         $to = session()->has('stats_to') ? session('stats_to') : null;
 
-        $pending = $this->order->where(['order_status' => 'pending'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $confirmed = $this->order->where(['order_status' => 'confirmed'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $processing = $this->order->where(['order_status' => 'processing'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $outForDelivery = $this->order->where(['order_status' => 'out_for_delivery'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $delivered = $this->order->where(['order_status' => 'delivered'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $all = $this->order
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', \Illuminate\Support\Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $returned = $this->order->where(['order_status' => 'returned'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $failed = $this->order->where(['order_status' => 'failed'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-        $canceled = $this->order->where(['order_status' => 'canceled'])
-            ->when($today, function ($query) {
-                return $query->whereDate('created_at', Carbon::today());
-            })
-            ->when($this_month, function ($query) {
-                return $query->whereMonth('created_at', Carbon::now());
-            })
-            ->when($custom, function ($query) use ($from, $to) {
-                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
-            })
-            ->count();
-
-        $data = [
-            'pending' => $pending,
-            'confirmed' => $confirmed,
-            'processing' => $processing,
-            'out_for_delivery' => $outForDelivery,
-            'delivered' => $delivered,
-            'all' => $all,
-            'returned' => $returned,
-            'failed' => $failed,
-            'canceled' => $canceled
+        $statuses = [
+            'new', 'scheduled', 'collecting', 'collected', 'in-transit', 'on-hold',
+            'out-for-delivery', 'delivered', 'partially-delivered', 'returned-warehouse',
+            'returning-origin', 'returned', 'partially-returned', 'postponed'
         ];
 
+        $data = [];
+        foreach ($statuses as $status) {
+            $data[$status] = $this->get_order_count($status, $today, $this_month, $custom, $from, $to);
+        }
+
+        $data['all'] = $this->order
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->when($custom, function ($query) use ($from, $to) {
+                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
+            })
+            ->count();
+
         return $data;
+    }
+
+    private function get_order_count($status, $today, $this_month, $custom, $from, $to)
+    {
+        return $this->order->where(['order_status' => $status])
+            ->when($today, function ($query) {
+                return $query->whereDate('created_at', Carbon::today());
+            })
+            ->when($this_month, function ($query) {
+                return $query->whereMonth('created_at', Carbon::now());
+            })
+            ->when($custom, function ($query) use ($from, $to) {
+                return $query->whereDate('created_at', '>=', $from)->whereDate('created_at', '<=', $to);
+            })
+            ->count();
     }
 
     /**

@@ -48,11 +48,13 @@
                                     </button>
 
 
+                                    @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('product.add'))
                                     <!-- Add New Button -->
                                     <a href="{{route('admin.product.add-new')}}" class="btn btn-primary-modern">
                                         <i class="tio-add mr-1"></i>
                                         <span>{{translate('إضافة منتج')}}</span>
                                     </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -119,8 +121,37 @@
                                 </div>
                             </div>
 
+                            <!-- Categories & Subcategories Filters -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label class="d-block mb-3"
+                                        style="font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="tio-category-outlined mr-1" style="color: #6b7280;"></i>
+                                        {{translate('الفئة الرئيسية')}}
+                                    </label>
+                                    <select name="category_id" id="category_id" class="form-control select2-filter"
+                                        onchange="filter_category(this.value)">
+                                        <option value="all">{{translate('الكل')}}</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{$category->id}}" {{$category_id == $category->id ? 'selected' : ''}}>{{$category->name}}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="d-block mb-3"
+                                        style="font-size: 13px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="tio-category-outlined mr-1" style="color: #6b7280;"></i>
+                                        {{translate('الفئة الفرعية')}}
+                                    </label>
+                                    <select name="sub_category_id" id="sub_category_id" class="form-control select2-filter"
+                                        onchange="filter_subcategory(this.value)">
+                                        <option value="all">{{translate('الكل')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Active Filters Summary -->
-                            @if(($stock_filter && $stock_filter != 'all') || ($status_filter && $status_filter != 'all'))
+                            @if(($stock_filter && $stock_filter != 'all') || ($status_filter && $status_filter != 'all') || ($category_id && $category_id != 'all') || ($sub_category_id && $sub_category_id != 'all'))
                                 <div class="mt-4 pt-4" style="border-top: 2px dashed #e5e7eb;">
                                     <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
                                         <small class="text-muted"
@@ -148,6 +179,26 @@
                                                     class="tio-{{ $status_filter == 'active' ? 'checkmark' : 'close' }}-circle-outlined"></i>
                                                 {{ $status_filter == 'active' ? translate('نشط') : translate('غير نشط') }}
                                                 <a href="{{route('admin.product.list', array_merge(request()->except('status_filter'), request('stock_filter') ? ['stock_filter' => request('stock_filter')] : []))}}"
+                                                    class="mr-1" style="color: inherit; opacity: 0.7;">
+                                                    <i class="tio-clear"></i>
+                                                </a>
+                                            </span>
+                                        @endif
+                                        @if($category_id && $category_id != 'all')
+                                            <span class="badge badge-soft-info" style="padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 600;">
+                                                <i class="tio-category"></i>
+                                                {{ $categories->find($category_id)->name ?? translate('الفئة الرئيسية') }}
+                                                <a href="{{route('admin.product.list', array_merge(request()->except('category_id', 'sub_category_id')))}}"
+                                                    class="mr-1" style="color: inherit; opacity: 0.7;">
+                                                    <i class="tio-clear"></i>
+                                                </a>
+                                            </span>
+                                        @endif
+                                        @if($sub_category_id && $sub_category_id != 'all')
+                                            <span class="badge badge-soft-info" style="padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 600;">
+                                                <i class="tio-category-outlined"></i>
+                                                {{translate('الفئة الفرعية')}}
+                                                <a href="{{route('admin.product.list', array_merge(request()->except('sub_category_id')))}}"
                                                     class="mr-1" style="color: inherit; opacity: 0.7;">
                                                     <i class="tio-clear"></i>
                                                 </a>
@@ -187,25 +238,31 @@
                                                 </div>
                                                 <a href="{{route('admin.product.view', [$product['id']])}}"
                                                     class="media-body text-dark">
-                                                    {{substr($product['name'], 0, 20)}}{{strlen($product['name']) > 20 ? '...' : ''}}
+                                                    {{$product['name']}}
                                                 </a>
                                             </div>
                                         </td>
                                         <td>
-                                            @if($product['status'] == 1)
-                                                <label class="switcher">
-                                                    <input type="checkbox" class="switcher_input change-status" checked
-                                                        id="{{$product['id']}}"
-                                                        data-route="{{route('admin.product.status', [$product['id'], 0])}}">
-                                                    <span class="switcher_control"></span>
-                                                </label>
+                                            @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('product.edit'))
+                                                @if($product['status'] == 1)
+                                                    <label class="switcher">
+                                                        <input type="checkbox" class="switcher_input change-status" checked
+                                                            id="{{$product['id']}}"
+                                                            data-route="{{route('admin.product.status', [$product['id'], 0])}}">
+                                                        <span class="switcher_control"></span>
+                                                    </label>
+                                                @else
+                                                    <label class="switcher">
+                                                        <input type="checkbox" class="switcher_input change-status"
+                                                            id="{{$product['id']}}"
+                                                            data-route="{{route('admin.product.status', [$product['id'], 1])}}">
+                                                        <span class="switcher_control"></span>
+                                                    </label>
+                                                @endif
                                             @else
-                                                <label class="switcher">
-                                                    <input type="checkbox" class="switcher_input change-status"
-                                                        id="{{$product['id']}}"
-                                                        data-route="{{route('admin.product.status', [$product['id'], 1])}}">
-                                                    <span class="switcher_control"></span>
-                                                </label>
+                                                <span class="badge badge-soft-{{$product['status'] == 1 ? 'success' : 'danger'}}">
+                                                    {{$product['status'] == 1 ? translate('active') : translate('inactive')}}
+                                                </span>
                                             @endif
                                         </td>
                                         <td>{{ Helpers::set_symbol($product['price']) }}</td>
@@ -226,15 +283,19 @@
                                         </td>
                                         <td>
                                             <div class="d-flex gap-2 justify-content-center">
+                                                @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('product.edit'))
                                                 <a class="btn btn-outline-primary square-btn"
                                                     href="{{route('admin.product.edit', [$product['id']])}}">
                                                     <i class="tio tio-edit"></i>
                                                 </a>
+                                                @endif
+                                                @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('product.delete'))
                                                 <a class="btn btn-outline-danger square-btn form-alert" href="javascript:"
                                                     data-id="product-{{$product['id']}}"
                                                     data-message="{{translate('Want to delete this product ?')}}">
                                                     <i class="tio tio-delete"></i>
                                                 </a>
+                                                @endif
                                             </div>
                                             <form action="{{route('admin.product.delete', [$product['id']])}}" method="post"
                                                 id="product-{{$product['id']}}">
@@ -611,4 +672,52 @@
             box-shadow: none;
         }
     </style>
+@endpush
+@push('script_2')
+    <script>
+        "use strict";
+
+        function filter_category(id) {
+            let nurl = new URL('{!!url()->full()!!}');
+            if (id == 'all') {
+                nurl.searchParams.delete('category_id');
+                nurl.searchParams.delete('sub_category_id');
+            } else {
+                nurl.searchParams.set('category_id', id);
+                nurl.searchParams.delete('sub_category_id');
+            }
+            location.href = nurl;
+        }
+
+        function filter_subcategory(id) {
+            let nurl = new URL('{!!url()->full()!!}');
+            if (id == 'all') {
+                nurl.searchParams.delete('sub_category_id');
+            } else {
+                nurl.searchParams.set('sub_category_id', id);
+            }
+            location.href = nurl;
+        }
+
+        $(document).on('ready', function () {
+            // Load subcategories if category is selected
+            let category_id = '{{$category_id}}';
+            let sub_category_id = '{{$sub_category_id}}';
+            
+            if (category_id && category_id != 'all') {
+                $.ajax({
+                    url: '{{route('admin.product.get-categories')}}',
+                    type: 'GET',
+                    data: {
+                        parent_id: category_id,
+                        sub_category: sub_category_id
+                    },
+                    success: function (data) {
+                        $('#sub_category_id').empty().append('<option value="all">{{translate('الكل')}}</option>');
+                        $('#sub_category_id').append(data.options);
+                    }
+                });
+            }
+        });
+    </script>
 @endpush

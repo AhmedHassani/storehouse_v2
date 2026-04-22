@@ -49,7 +49,7 @@ class Category extends Model
     public function getImageFullPathAttribute(): string
     {
         $image = $this->image ?? null;
-        $path = asset('public/assets/admin/img/160x160/img2.jpg');
+        $path = asset('assets/admin/img/160x160/img2.jpg');
 
         if (!is_null($image) && Storage::disk('public')->exists('category/' . $image)) {
             $path = asset('storage/app/public/category/' . $image);
@@ -59,7 +59,7 @@ class Category extends Model
     public function getBannerImageFullPathAttribute(): string
     {
         $image = $this->banner_image ?? null;
-        $path = asset('public/assets/admin/img/8_1.png');
+        $path = asset('assets/admin/img/8_1.png');
 
         if (!is_null($image) && Storage::disk('public')->exists('category/banner/' . $image)) {
             $path = asset('storage/app/public/category/banner/' . $image);

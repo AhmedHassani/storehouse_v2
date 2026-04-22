@@ -22,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use function App\CentralLogics\translate;
@@ -34,7 +35,8 @@ class OrderController extends Controller
         private OrderDetail $orderDetail,
         private Product $product,
         private Branch $branch,
-        private DeliveryMan $deliveryMan
+        private DeliveryMan $deliveryMan,
+        private \App\Services\BoxyDeliveryService $boxyService
     ) {
     }
 
@@ -121,7 +123,11 @@ class OrderController extends Controller
      */
     public function status(Request $request): RedirectResponse
     {
-        $order = $this->order->find($request->id);
+        $order = $this->order->with(['details'])->find($request->id);
+
+        \Log::info("=== STATUS CHANGE REQUEST ===");
+        \Log::info("Order ID: " . $request->id . " | New Status: " . $request->order_status . " | Boxy UID: " . ($order->boxy_uid ?? 'NONE'));
+        \Log::info("============================");
 
         if (in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
             Toastr::warning(translate('you_can_not_change_the_status_of ' . $order->order_status . ' order'));
@@ -177,24 +183,56 @@ class OrderController extends Controller
                     if ($product != null) {
                         //check stock
                         foreach ($order->details as $c) {
-                            $product = $this->product->find($c['product_id']);
-                            $type = json_decode($c['variation'])[0]->type;
-                            foreach (json_decode($product['variations'], true) as $var) {
-                                if ($type == $var['type'] && $var['stock'] < $c['quantity']) {
-                                    Toastr::error(translate('Stock is insufficient!'));
-                                    return back();
+                            $product_item = $this->product->find($c['product_id']);
+                            $c_vars = $c['variation'];
+                            if (!is_array($c_vars)) {
+                                $c_vars = json_decode($c_vars, true);
+                            }
+                            
+                            if (is_array($c_vars) && count($c_vars) > 0) {
+                                // Support both object and array formats
+                                $type = is_array($c_vars[0]) ? ($c_vars[0]['type'] ?? null) : ($c_vars[0]->type ?? null);
+                                
+                                if ($type) {
+                                    $p_vars = $product_item['variations'];
+                                    if (!is_array($p_vars)) {
+                                        $p_vars = json_decode($p_vars, true);
+                                    }
+                                    
+                                    foreach ($p_vars ?? [] as $var) {
+                                        if (is_array($var) && isset($var['type']) && $type == $var['type'] && isset($var['stock']) && $var['stock'] < $c['quantity']) {
+                                            Toastr::error(translate('Stock is insufficient!'));
+                                            return back();
+                                        }
+                                    }
                                 }
                             }
                         }
-
-                        $type = json_decode($detail['variation'])[0]->type;
+                        
                         $varStore = [];
-                        foreach (json_decode($product['variations'], true) as $var) {
-                            if ($type == $var['type']) {
-                                $var['stock'] -= $detail['quantity'];
-                            }
-                            $varStore[] = $var;
+                        $detail_vars = $detail['variation'];
+                        if (!is_array($detail_vars)) {
+                            $detail_vars = json_decode($detail_vars, true);
                         }
+
+                        if (is_array($detail_vars) && count($detail_vars) > 0) {
+                            $type = is_array($detail_vars[0]) ? ($detail_vars[0]['type'] ?? null) : ($detail_vars[0]->type ?? null);
+                            
+                            if ($type) {
+                                $p_vars = $product['variations'];
+                                if (!is_array($p_vars)) {
+                                    $p_vars = json_decode($p_vars, true);
+                                }
+                                
+                                foreach ($p_vars ?? [] as $var) {
+                                    if (is_array($var) && isset($var['type']) && $type == $var['type']) {
+                                        $var['stock'] -= $detail['quantity'];
+                                    }
+                                    $varStore[] = $var;
+                                }
+                            }
+                        }
+                        
                         $this->product->where(['id' => $product['id']])->update([
                             'variations' => json_encode($varStore),
                             'total_stock' => $product['total_stock'] - $detail['quantity'],
@@ -207,15 +245,46 @@ class OrderController extends Controller
             }
         }
 
-        $order->order_status = $request->order_status;
-        DB::beginTransaction();
-        $order->save();
-        if ($request->order_status == 'delivered') {
-            if ($order->is_guest != 1) {
-                $this->customerCreditWalletTransactionsForOrderComplete(customer: $order->customer, order: $order);
+        // For 'scheduled' status: send to Boxy FIRST, only save locally if Boxy confirms
+        if (in_array($request->order_status, ['scheduled', 'confirmed', 'processing']) && $order->boxy_uid) {
+            $boxyResponse = $this->boxyService->setReadyToPickUp($order->refresh());
+            if (!$boxyResponse['success']) {
+                $errDetail = isset($boxyResponse['body']) ? json_encode($boxyResponse['body']) : ($boxyResponse['message'] ?? 'Unknown error');
+                Toastr::error(translate('Failed to update Boxy. Local status NOT changed. Boxy error: ') . $errDetail);
+                return back();
             }
+            // Boxy confirmed → now save locally
+            $order->order_status = $request->order_status;
+            DB::beginTransaction();
+            try {
+                $order->save();
+                DB::commit();
+                Toastr::success(translate('Boxy updated successfully! Order status changed to scheduled.'));
+            } catch (\Exception $e) {
+                DB::rollback();
+                Toastr::error(translate('Boxy updated but failed to save locally: ') . $e->getMessage());
+                return back();
+            }
+        } else {
+            // For other statuses: save locally first, then sync
+            $order->order_status = $request->order_status;
+            DB::beginTransaction();
+            try {
+                $order->save();
+                if ($request->order_status == 'delivered') {
+                    if ($order->is_guest != 1) {
+                        $this->customerCreditWalletTransactionsForOrderComplete(customer: $order->customer, order: $order);
+                    }
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                Toastr::error(translate('Failed to update order status'));
+                return back();
+            }
+            $this->syncWithBoxy($order);
         }
-        DB::commit();
+
 
         $customerFcmToken = $order->is_guest == 0 ? ($order->customer ? $order->customer->cm_firebase_token : null) : ($order->guest ? $order->guest->fcm_token : null);
         $value = Helpers::order_status_update_message($request->order_status);
@@ -323,6 +392,7 @@ class OrderController extends Controller
         }
         $order->payment_status = $request->payment_status;
         $order->save();
+        $this->syncWithBoxy($order);
         Toastr::success(translate('Payment status updated!'));
         return back();
     }
@@ -356,6 +426,15 @@ class OrderController extends Controller
         ];
 
         DB::table('customer_addresses')->where('id', $id)->update($address);
+
+        // Update Order snapshot and sync with Boxy
+        $order = $this->order->where('delivery_address_id', $id)->first();
+        if ($order) {
+            $order->delivery_address = $address;
+            $order->save();
+            $this->syncWithBoxy($order);
+        }
+
         Toastr::success(translate('Address updated!'));
         return back();
     }
@@ -364,9 +443,21 @@ class OrderController extends Controller
      * @param $id
      * @return Application|Factory|View
      */
-    public function generateInvoice($id): View|Factory|Application
+    public function generateInvoice($id)
     {
         $order = $this->order->where('id', $id)->first();
+
+        // If it's a Boxy order, try to get the label from Boxy API
+        if ($order->boxy_uid) {
+            $pdfContent = $this->boxyService->getOrderLabel($order->boxy_uid);
+            if ($pdfContent) {
+                return response($pdfContent, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="invoice-'.$order->id.'.pdf"'
+                ]);
+            }
+        }
+
         return view('admin-views.order.invoice', compact('order'));
     }
 
@@ -497,6 +588,7 @@ class OrderController extends Controller
         }
 
         $order->save();
+        $this->syncWithBoxy($order);
         Toastr::success(translate('تم تحديث الدفع بنجاح!'));
         return back();
     }
@@ -527,6 +619,7 @@ class OrderController extends Controller
             }
         }
 
+        $this->syncWithBoxy($order);
         Toastr::success(translate('Order data updated successfully!'));
         return back();
     }
@@ -694,15 +787,113 @@ class OrderController extends Controller
         }
 
         try {
-            $boxyService = new \App\Services\BoxyDeliveryService();
-            $response = $boxyService->deleteOrder($order->boxy_uid);
+            $response = $this->boxyService->cancelOrder($order->boxy_uid);
 
             if ($response['success']) {
-                // Update order status to canceled (deleted)
                 $order->order_status = 'canceled';
                 $order->save();
+                Toastr::success(translate('Order canceled on Boxy Delivery successfully'));
+            } else {
+                Toastr::error(translate('Failed to cancel order on Boxy: ') . ($response['message'] ?? 'Unknown error'));
+            }
+        } catch (\Exception $e) {
+            Toastr::error(translate('Error canceling Boxy order: ') . $e->getMessage());
+        }
 
-                Toastr::success(translate('Order deleted on Boxy Delivery successfully'));
+        return back();
+    }
+
+    public function setBoxyReadyToPickup($id): RedirectResponse
+    {
+        $order = $this->order->with(['details'])->find($id);
+
+        if (!$order) {
+            Toastr::error(translate('Order not found'));
+            return back();
+        }
+
+        if (!$order->boxy_uid) {
+            Toastr::error(translate('This order is not linked to Boxy Delivery'));
+            return back();
+        }
+
+        try {
+            $response = $this->boxyService->setReadyToPickUp($order);
+
+            if ($response['success']) {
+                $order->order_status = 'scheduled';
+                $order->save();
+                Toastr::success(translate('Boxy updated: Ready to Pick Up! Status set to Scheduled.'));
+            } else {
+                $errDetail = isset($response['body']) ? json_encode($response['body'], JSON_UNESCAPED_UNICODE) : ($response['message'] ?? 'Unknown error');
+                Toastr::error(translate('Failed to notify Boxy: ') . $errDetail);
+            }
+        } catch (\Exception $e) {
+            Toastr::error(translate('Error: ') . $e->getMessage());
+        }
+
+        return back();
+    }
+
+    public function bulkReadyToPickup(Request $request): RedirectResponse
+    {
+        $orderIds = $request->input('order_ids', []);
+
+        if (empty($orderIds)) {
+            Toastr::warning(translate('Please select at least one order'));
+            return back();
+        }
+
+        $orders = $this->order->with(['details'])->whereIn('id', $orderIds)->whereNotNull('boxy_uid')->get();
+
+        if ($orders->isEmpty()) {
+            Toastr::error(translate('No selected orders are linked to Boxy Delivery'));
+            return back();
+        }
+
+        $boxyUids = $orders->pluck('boxy_uid')->toArray();
+
+        try {
+            $response = $this->boxyService->bulkSetReadyToPickUp($boxyUids);
+
+            if ($response['success']) {
+                // Update local statuses
+                $this->order->whereIn('id', $orders->pluck('id')->toArray())->update(['order_status' => 'scheduled']);
+                Toastr::success(translate('Boxy notified for ') . count($boxyUids) . translate(' orders! Statuses set to Scheduled.'));
+            } else {
+                $errDetail = isset($response['body']) ? json_encode($response['body'], JSON_UNESCAPED_UNICODE) : ($response['message'] ?? 'Unknown error');
+                Toastr::error(translate('Boxy bulk request failed: ') . $errDetail);
+            }
+        } catch (\Exception $e) {
+            Toastr::error(translate('Error: ') . $e->getMessage());
+        }
+
+        return back();
+    }
+
+    public function deleteBoxyOrder($id): RedirectResponse
+    {
+        $order = $this->order->find($id);
+
+        if (!$order) {
+            Toastr::error(translate('Order not found'));
+            return back();
+        }
+
+        if (!$order->boxy_uid) {
+            Toastr::error(translate('This order was not sent to Boxy Delivery'));
+            return back();
+        }
+
+        try {
+            $response = $this->boxyService->deleteOrder($order->boxy_uid);
+
+            if ($response['success']) {
+                $order->boxy_uid = null;
+                $order->boxy_platform_code = null;
+                $order->order_status = 'canceled';
+                $order->save();
+                Toastr::success(translate('Order deleted from Boxy Delivery successfully'));
             } else {
                 Toastr::error(translate('Failed to delete order on Boxy: ') . ($response['message'] ?? 'Unknown error'));
             }
@@ -710,6 +901,180 @@ class OrderController extends Controller
             Toastr::error(translate('Error deleting Boxy order: ') . $e->getMessage());
         }
 
+        return back();
+    }
+
+    /**
+     * Delete an item from an existing order and sync with Boxy
+     *
+     * @param $id
+     * @return RedirectResponse
+     */
+    public function deleteItem($id): RedirectResponse
+    {
+        $detail = $this->orderDetail->find($id);
+        if (!$detail) {
+            Toastr::error(translate('Item not found'));
+            return back();
+        }
+
+        $order = $this->order->with('details')->find($detail->order_id);
+        if (!$order) {
+            Toastr::error(translate('Order not found'));
+            return back();
+        }
+
+        // Stock handling
+        if ($detail['is_stock_decreased'] == 1) {
+            $product = $this->product->find($detail['product_id']);
+            if ($product != null) {
+                $varStore = [];
+                $type = $detail['variant'];
+                
+                // Handle potential JSON encoding from POSController
+                if ($type && str_starts_with($type, '"') && str_ends_with($type, '"')) {
+                    $type = json_decode($type);
+                }
+
+                $variations = $product['variations'] ? json_decode($product['variations'], true) : [];
+                if (!empty($variations)) {
+                    foreach ($variations as $var) {
+                        if ($type == $var['type']) {
+                            $var['stock'] += $detail['quantity'];
+                        }
+                        $varStore[] = $var;
+                    }
+                    $this->product->where(['id' => $product['id']])->update([
+                        'variations' => json_encode($varStore),
+                        'total_stock' => $product['total_stock'] + $detail['quantity'],
+                    ]);
+                } else {
+                    $this->product->where(['id' => $product['id']])->update([
+                        'total_stock' => $product['total_stock'] + $detail['quantity'],
+                    ]);
+                }
+            }
+        }
+
+        // Adjust order totals
+        $amount_to_subtract = ($detail['price'] - $detail['discount_on_product']) * $detail['quantity'];
+        $tax_to_subtract = $detail['tax_amount'] * $detail['quantity'];
+
+        $order->order_amount -= ($amount_to_subtract + $tax_to_subtract);
+        $order->total_tax_amount -= $tax_to_subtract;
+        
+        $order->save();
+        $detail->delete();
+        
+        // Refresh details relationship to ensure the deleted item is gone from the collection
+        $order->load('details');
+
+        // Sync with Boxy
+        $this->syncWithBoxy($order);
+
+        Toastr::success(translate('Item removed successfully!'));
+        return back();
+    }
+
+    /**
+     * Sync order data with Boxy Delivery platform if applicable
+     *
+     * @param $order
+     * @return void
+     */
+    private function syncWithBoxy($order)
+    {
+        if ($order->boxy_uid) {
+            try {
+                $response = $this->boxyService->updateOrder($order);
+                if (!$response['success']) {
+                    $errorMsg = $response['message'] ?? 'Unknown error';
+                    if (isset($response['body'])) {
+                        $errorMsg .= " - Details: " . json_encode($response['body']);
+                    }
+                    Log::error("Boxy Sync Error for Order #{$order->id}: " . $errorMsg);
+                    Toastr::error(translate('Failed to sync with Boxy Delivery: ') . $errorMsg);
+                } else {
+                    Toastr::success(translate('Order synced with Boxy Delivery successfully!'));
+                }
+            } catch (\Exception $e) {
+                Log::error("Boxy Sync Exception for Order #{$order->id}: " . $e->getMessage());
+                Toastr::error(translate('Critical error during Boxy sync. Check logs.'));
+            }
+        }
+    }
+
+    public function updateItem(Request $request, $id): RedirectResponse
+    {
+        $detail = $this->orderDetail->find($id);
+        if ($detail == null) {
+            Toastr::error(translate('Order detail not found!'));
+            return back();
+        }
+
+        $order = $this->order->find($detail->order_id);
+        if ($order->order_status != 'new' && $order->order_status != 'scheduled') {
+            Toastr::error(translate('You can only update items for new or scheduled orders!'));
+            return back();
+        }
+
+        $qty = (int)$request->quantity;
+        $price = (float)$request->price;
+
+        // Stock adjustment
+        if ($detail['is_stock_decreased'] == 1) {
+            $product = $this->product->find($detail['product_id']);
+            if ($product != null) {
+                $qty_diff = $qty - $detail['quantity'];
+                
+                $varStore = [];
+                $type = $detail['variant'];
+                if ($type && str_starts_with($type, '"') && str_ends_with($type, '"')) {
+                    $type = json_decode($type);
+                }
+
+                $variations = $product['variations'] ? json_decode($product['variations'], true) : [];
+                if (!empty($variations)) {
+                    foreach ($variations as $var) {
+                        if ($type == $var['type']) {
+                            $var['stock'] -= $qty_diff;
+                        }
+                        $varStore[] = $var;
+                    }
+                    $this->product->where(['id' => $product['id']])->update([
+                        'variations' => json_encode($varStore),
+                        'total_stock' => $product['total_stock'] - $qty_diff,
+                    ]);
+                } else {
+                    $this->product->where(['id' => $product['id']])->update([
+                        'total_stock' => $product['total_stock'] - $qty_diff,
+                    ]);
+                }
+            }
+        }
+
+        // Update detail
+        $detail->quantity = $qty;
+        $detail->price = $price;
+        $detail->save();
+
+        // Recalculate order total
+        $order->load('details');
+        $sub_total = 0;
+        $total_tax = 0;
+        foreach ($order->details as $d) {
+            $sub_total += ($d['price'] - $d['discount_on_product']) * $d['quantity'];
+            $total_tax += $d['tax_amount'] * $d['quantity'];
+        }
+
+        $order->order_amount = $sub_total + $total_tax + $order->delivery_charge - $order->coupon_discount_amount - $order->extra_discount;
+        $order->total_tax_amount = $total_tax;
+        $order->save();
+
+        // Sync with Boxy
+        $this->syncWithBoxy($order);
+
+        Toastr::success(translate('Order item updated successfully!'));
         return back();
     }
 }

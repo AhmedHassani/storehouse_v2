@@ -23,7 +23,7 @@ class Conversation extends Model
                 if (Storage::disk('public')->exists('conversation/' . $item)) {
                     $imageUrlArray[$key] = asset('storage/app/public/conversation/'. $item) ;
                 } else {
-                    $imageUrlArray[$key] = asset('public/assets/admin/img/900x400/img1.jpg');
+                    $imageUrlArray[$key] = asset('assets/admin/img/900x400/img1.jpg');
                 }
             }
         }

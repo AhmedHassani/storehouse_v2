@@ -12,396 +12,323 @@
             <span class="badge badge-soft-dark rounded-50 fz-14">{{$order->details->count()}}</span>
         </h2>
     </div>
-    
+
     @php($googleMapStatus = \App\CentralLogics\Helpers::get_business_settings('google_map_status'))
-    
+
     <div class="row">
         <div class="col-lg-{{$order->user_id == null ? 12 : 8}} mb-3 mb-lg-0">
-            <div class="card mb-3 mb-lg-5">
-                <div class="card-body">
-                    <div class="mb-3 text-dark d-print-none">
-                        <div class="row gy-3">
-                            <div class="col-sm-6">
-                                <div class="d-flex flex-column justify-content-between h-100">
-                                    <div class="d-flex flex-column gap-2">
-                                        <h2 class="page-header-title">{{translate('order')}} #{{$order['id']}}</h2>
-                                        <div>
-                                            <i class="tio-date-range"></i>
-                                            {{date('d M Y h:i a', strtotime($order['created_at']))}}
-                                        </div>
-
-                                        {{-- Branch Hidden --}}
-                                        {{-- <h5 class="mb-0">
-                                            <i class="tio-shop"></i>
-                                            {{translate('branch')}} : <label
-                                                class="badge badge-secondary">{{$order->branch?$order->branch->name:'Branch
-                                                deleted!'}}</label>
-                                        </h5> --}}
+        <div class="card mb-3 mb-lg-5">
+            <div class="card-body">
+                <div class="mb-3 text-dark d-print-none">
+                    <div class="row gy-3">
+                        <div class="col-sm-6">
+                            <div class="d-flex flex-column justify-content-between h-100">
+                                <div class="d-flex flex-column gap-2">
+                                    <h2 class="page-header-title">{{translate('order')}} #{{$order['id']}}</h2>
+                                    <div>
+                                        <i class="tio-date-range"></i>
+                                        {{date('d M Y h:i a', strtotime($order['created_at']))}}
                                     </div>
-                                    @if($order['order_type'] != 'pos' && $order['order_note'])
-                                        <div><strong>{{translate('note')}}:</strong> {{$order['order_note']}}
-                                        </div>
-                                    @endif
-                                    @if($order['bring_change_amount'] > 0)
-                                        <div
-                                            class="badge badge-soft-info p-2 d-flex align-items-center gap-1 text-wrap text-left lh-1.3 font-size-sm">
-                                            <i class="tio-info"></i>
-                                            <span class="text-dark opacity-lg">
-                                                {{translate('Please_bring') . ' ' . \App\CentralLogics\Helpers::set_symbol($order['bring_change_amount']) . ' ' . translate('in_change_for_the_customer_when_making_the_delivery')}}
-                                            </span>
-                                        </div>
-                                    @endif
+                                </div>
+                                @if($order['order_type'] != 'pos' && $order['order_note'])
+                                    <div class="mt-2"><strong>{{translate('note')}}:</strong> {{$order['order_note']}}</div>
+                                @endif
+                                @if($order['bring_change_amount'] > 0)
+                                    <div class="badge badge-soft-info p-2 d-flex align-items-center gap-1 text-wrap text-left lh-1.3 font-size-sm mt-2">
+                                        <i class="tio-info"></i>
+                                        <span class="text-dark opacity-lg">
+                                            {{translate('Please_bring') . ' ' . \App\CentralLogics\Helpers::set_symbol($order['bring_change_amount']) . ' ' . translate('in_change_for_the_customer_when_making_the_delivery')}}
+                                        </span>
+                                    </div>
+                                @endif
 
-
-                                    {{-- Boxy Delivery Information --}}
-                                    @if($order['boxy_uid'] || $order['boxy_platform_code'])
-                                        <div class="badge badge-soft-primary p-2 d-flex flex-column align-items-start gap-1 text-wrap text-left lh-1.3 font-size-sm mt-2">
-                                            <div class="font-weight-bold">
-                                                <i class="tio-shipping"></i> {{translate('Boxy Delivery')}}
+                                {{-- Boxy Delivery Information --}}
+                                @if($order['boxy_uid'] || $order['boxy_platform_code'])
+                                    <div class="badge badge-soft-primary p-2 d-flex flex-column align-items-start gap-1 text-wrap text-left lh-1.3 font-size-sm mt-2">
+                                        <div class="font-weight-bold">
+                                            <i class="tio-shipping"></i> {{translate('Boxy Delivery')}}
+                                        </div>
+                                        @if($order['boxy_platform_code'])
+                                            <div class="text-dark">
+                                                <strong>{{translate('Platform Code')}}:</strong> {{$order['boxy_platform_code']}}
                                             </div>
-                                            @if($order['boxy_platform_code'])
-                                                <div class="text-dark">
-                                                    <strong>{{translate('Platform Code')}}:</strong> {{$order['boxy_platform_code']}}
-                                                </div>
-                                            @endif
-                                            @if($order['boxy_uid'])
-                                                <div class="text-dark opacity-lg">
-                                                    <strong>{{translate('UID')}}:</strong> {{$order['boxy_uid']}}
-                                                </div>
-                                                @if($order['order_status'] !== 'canceled')
-                                                    <form action="{{route('admin.orders.cancel-boxy', $order['id'])}}" method="post" class="mt-2">
+                                        @endif
+                                        @if($order['boxy_uid'])
+                                            <div class="text-dark opacity-lg">
+                                                <strong>{{translate('UID')}}:</strong> {{$order['boxy_uid']}}
+                                            </div>
+                                            @if($order['order_status'] !== 'canceled')
+                                                <div class="d-flex gap-2 mt-2 flex-wrap">
+                                                    <form action="{{route('admin.orders.ready-to-pickup', $order['id'])}}" method="post">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-danger btn-sm" 
-                                                            onclick="return confirm('{{translate('Are you sure you want to cancel this order on Boxy Delivery?')}}')">
-                                                            <i class="tio-clear"></i> {{translate('Cancel Boxy Order')}}
+                                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('{{translate('Send Ready to Pick Up to Boxy?')}}')">
+                                                            <i class="tio-checkmark-circle"></i> {{translate('Ready to Pick Up')}}
                                                         </button>
                                                     </form>
-                                                @endif
+                                                    <form action="{{route('admin.orders.cancel-boxy', $order['id'])}}" method="post">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('{{translate('Are you sure you want to cancel this order on Boxy Delivery?')}}')">
+                                                            <i class="tio-clear"></i> {{translate('cancel')}}
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{route('admin.orders.delete-boxy', $order['id'])}}" method="post">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('{{translate('Are you sure you want to PERMANENTLY DELETE this order from Boxy Delivery?')}}')">
+                                                            <i class="tio-delete"></i> {{translate('delete')}}
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             @endif
-                                        </div>
-                                    @endif
-
-
-                                </div>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
-                            <div class="col-sm-6">
-                                <div class="d-flex flex-column gap-2 align-items-sm-end h-100">
-                                    <div class="d-flex gap-2">
-                                        @if($googleMapStatus == 1)
-                                        <div class="hs-unfold">
-                                            @if($order['order_status'] == 'out_for_delivery')
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="d-flex flex-column gap-2 align-items-sm-end h-100">
+                                <div class="d-flex gap-2">
+                                    @if($googleMapStatus == 1)
+                                    <div class="hs-unfold">
+                                        @if($order['order_status'] == 'out_for_delivery')
                                             @php($origin = \App\Models\DeliveryHistory::where(['deliveryman_id' => $order['delivery_man_id'], 'order_id' => $order['id']])->first())
                                             @php($current = \App\Models\DeliveryHistory::where(['deliveryman_id' => $order['delivery_man_id'], 'order_id' => $order['id']])->latest()->first())
-                                                @if(isset($origin))
-                                                    <a class="btn btn-outline-primary" target="_blank"
-                                                        title="{{translate('Delivery Boy Last Location')}}"
-                                                        data-toggle="tooltip" data-placement="top"
-                                                        href="https://www.google.com/maps/dir/?api=1&origin={{$origin['latitude']}},{{$origin['longitude']}}&destination={{$current['latitude']}},{{$current['longitude']}}">
-                                                        <i class="tio-map"></i>
-                                                    </a>
-                                                @else
-                                                    <a class="btn btn-outline-primary" href="javascript:" data-toggle="tooltip"
-                                                        data-placement="top" title="{{translate('Waiting for location...')}}">
-                                                        <i class="tio-map"></i>
-                                                    </a>
-                                                @endif
+                                            @if(isset($origin))
+                                                <a class="btn btn-outline-primary" target="_blank" title="{{translate('Delivery Boy Last Location')}}" data-toggle="tooltip" data-placement="top" href="http://maps.google.com/?q={{$current['latitude']}},{{$current['longitude']}}">
+                                                    <i class="tio-map"></i>
+                                                </a>
                                             @else
-                                            <a class="btn btn-outline-dark last_location_view" href="javascript:"
-                                                data-toggle="tooltip" data-placement="top"
-                                                title="{{translate('Only available when order is out for delivery!')}}">
+                                                <a class="btn btn-outline-primary" href="javascript:" data-toggle="tooltip" data-placement="top" title="{{translate('Waiting for location...')}}">
+                                                    <i class="tio-map"></i>
+                                                </a>
+                                            @endif
+                                        @else
+                                            <a class="btn btn-outline-dark last_location_view" href="javascript:" data-toggle="tooltip" data-placement="top" title="{{translate('Only available when order is out for delivery!')}}">
                                                 <i class="tio-map"></i>
                                             </a>
-                                            @endif
-                                        </div>
-                                        @endif
-
-                                        @if($order->order_type == 'pos')
-                                            <button class="btn btn-primary invoice-printing" target="_blank" type="button"
-                                                data-id="{{$order->id}}">
-                                                <i class="tio-print"></i> {{translate('print_invoice')}}
-                                            </button>
-                                        @else
-                                            <a class="btn btn-primary" target="_blank"
-                                                href={{route('admin.orders.generate-invoice', [$order['id']])}}>
-                                                <i class="tio-print"></i> {{translate('print_invoice')}}
-                                            </a>
-                                        @endif
-
-                                    </div>
-                                    <div class="d-flex justify-content-sm-end gap-2">
-                                        <div>{{translate('حالة الطلب')}}:</div>
-                                        @if($order['order_status'] == 'pending')
-                                            <span class="text-info text-capitalize">{{translate('قيد الانتظار')}}</span>
-                                        @elseif($order['order_status'] == 'confirmed')
-                                            <span class="text-info text-capitalize">{{translate('مؤكد')}}</span>
-                                        @elseif($order['order_status'] == 'processing')
-                                            <span class="text-warning text-capitalize">{{translate('قيد التنفيذ')}}</span>
-                                        @elseif($order['order_status'] == 'out_for_delivery')
-                                            <span class="text-warning text-capitalize">{{translate('خارج للتوصيل')}}</span>
-                                        @elseif($order['order_status'] == 'delivered')
-                                            <span class="text-success text-capitalize">{{translate('تم التوصيل')}}</span>
-                                        @elseif($order['order_status'] == 'returned')
-                                            <span class="text-danger text-capitalize">{{translate('مرتجع')}}</span>
-                                        @elseif($order['order_status'] == 'failed')
-                                            <span class="text-danger text-capitalize">{{translate('فشل')}}</span>
-                                        @else
-                                            <span class="text-danger text-capitalize">{{translate('ملغي')}}</span>
                                         @endif
                                     </div>
-
-                                    <div class="d-flex justify-content-sm-end gap-2">
-                                        <div>{{translate('طريقة الدفع')}}:</div>
-                                        <div>{{translate(str_replace('_', ' ', $order['payment_method']))}}</div>
-                                    </div>
-                                    @if($order['payment_method'] != 'cash_on_delivery' && $order['payment_method'] != 'wallet')
-                                        <div class="d-flex justify-content-sm-end align-items-center gap-2">
-                                            @if($order['transaction_reference'] == null && $order['order_type'] != 'pos')
-                                                <div>{{translate('رمز المرجع')}}:</div>
-                                                <button class="btn btn-outline-primary btn-sm py-1" data-toggle="modal"
-                                                    data-target=".bd-example-modal-sm">
-                                                    {{translate('إضافة')}}
-                                                </button>
-                                            @elseif($order['order_type'] != 'pos')
-                                                {{-- Reference Code Hidden --}}
-                                                {{-- <div>{{translate('رمز المرجع')}}:</div>
-                                                <div>{{$order['transaction_reference']}}</div> --}}
-                                            @endif
-                                        </div>
                                     @endif
 
-                                    <div class="d-flex justify-content-sm-end gap-2">
-                                        <div>{{translate('حالة الدفع')}}:</div>
-                                        @if($order['payment_status'] == 'paid')
-                                            <span class="text-success">{{translate('مدفوع')}}</span>
-                                        @elseif($order['payment_status'] == 'partially_paid')
-                                            <span class="text-warning">{{translate('مدفوع جزئياً')}}</span>
-                                        @else
-                                            <span class="text-danger">{{translate('غير مدفوع')}}</span>
-                                        @endif
-                                    </div>
+                                    @if($order->boxy_uid)
+                                        <a class="btn btn-primary" target="_blank" href="{{route('admin.orders.generate-invoice', [$order['id']])}}">
+                                            <i class="tio-print"></i> {{translate('print_invoice')}}
+                                        </a>
+                                    @elseif($order->order_type == 'pos')
+                                        <button class="btn btn-primary invoice-printing" target="_blank" type="button" data-id="{{$order->id}}">
+                                            <i class="tio-print"></i> {{translate('print_invoice')}}
+                                        </button>
+                                    @else
+                                        <a class="btn btn-primary" target="_blank" href="{{route('admin.orders.generate-invoice', [$order['id']])}}">
+                                            <i class="tio-print"></i> {{translate('print_invoice')}}
+                                        </a>
+                                    @endif
+                                </div>
 
-                                    <div class="d-flex justify-content-sm-end gap-2">
-                                        <div>{{translate('نوع الطلب')}}:</div>
-                                        <label
-                                            class="text-primary">{{translate(str_replace('_', ' ', $order['order_type']))}}</label>
-                                    </div>
+                                <div class="d-flex justify-content-sm-end gap-2">
+                                    <div>{{translate('حالة الطلب')}}:</div>
+                                    @php($status_classes = [
+                                        'new'=>'text-info', 'scheduled'=>'text-info', 'collecting'=>'text-info',
+                                        'collected'=>'text-info', 'in-transit'=>'text-info', 'on-hold'=>'text-info',
+                                        'out-for-delivery'=>'text-info', 'delivered'=>'text-success', 'partially-delivered'=>'text-success',
+                                        'returned-warehouse'=>'text-danger', 'returning-origin'=>'text-danger', 'returned'=>'text-danger',
+                                        'partially-returned'=>'text-danger', 'postponed'=>'text-danger'
+                                    ])
+                                    <span class="{{$status_classes[$order['order_status']] ?? 'text-danger'}} text-capitalize">
+                                        {{translate(str_replace('_', ' ', $order['order_status']))}}
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-sm-end gap-2">
+                                    <div>{{translate('طريقة الدفع')}}:</div>
+                                    <div>{{translate(str_replace('_', ' ', $order['payment_method']))}}</div>
+                                </div>
+
+                                <div class="d-flex justify-content-sm-end gap-2">
+                                    <div>{{translate('حالة الدفع')}}:</div>
+                                    @if($order['payment_status'] == 'paid')
+                                        <span class="text-success">{{translate('مدفوع')}}</span>
+                                    @elseif($order['payment_status'] == 'partially_paid')
+                                        <span class="text-warning">{{translate('مدفوع جزئياً')}}</span>
+                                    @else
+                                        <span class="text-danger">{{translate('غير مدفوع')}}</span>
+                                    @endif
+                                </div>
+
+                                <div class="d-flex justify-content-sm-end gap-2">
+                                    <div>{{translate('نوع الطلب')}}:</div>
+                                    <label class="text-primary">{{translate(str_replace('_', ' ', $order['order_type']))}}</label>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    @php($item_amount = 0)
-                    @php($sub_total = 0)
-                    @php($total_tax = 0)
-                    @php($total_dis_on_pro = 0)
-                    @php($total_item_discount = 0)
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-align-middle text-dark">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>{{ translate('SL') }}</th>
-                                    <th>{{ translate('Item Description') }}</th>
-                                    <th>{{ translate('Unit Price') }}</th>
-                                    <th>{{ translate('Discount') }}</th>
-                                    <th>{{ translate('Qty') }}</th>
-                                    <th class="text-right">{{ translate('Total') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($order->details as $detail)
-                                @if($detail->product_details != null)
-                                @php($product = json_decode($detail->product_details, true))
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>
-                                        <div class="media gap-3 max-content">
-                                            <div class="avatar-xl">
-                                                @if($detail->product && $detail->product['image'] != null)
-                                                    <img class="img-fit" src="{{$detail->product['image_fullpath'][0]}}"
-                                                        alt="{{ translate('image') }}">
-                                                @else
-                                                    <img src="{{asset('assets/admin/img/160x160/img2.jpg')}}"
-                                                        class="img-fit img-fluid rounded aspect-ratio-1"
-                                                        alt="{{ translate('image') }}">
-                                                @endif
-                                            </div>
-                                            <div class="media-body">
-                                                <h6 class="mb-1 w-24ch">{{$product['name']}}</h6>
-                                                @if(count(json_decode($detail['variation'], true)) > 0)
-                                                    @foreach(json_decode($detail['variation'], true)[0] ?? json_decode($detail['variation'], true) as $key1 => $variation)
-                                                        <div class="font-size-sm text-body text-capitalize">
-                                                            @if($variation != null)
-                                                                <span>{{$key1}} : </span>
-                                                            @endif
-                                                            <span class="font-weight-bold">{{$variation}}</span>
-                                                        </div>
-                                                    @endforeach
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {{ Helpers::set_symbol($detail['price']) }}
-                                    </td>
-                                    <td>{{Helpers::set_symbol($detail['discount_on_product'])}}</td>
-                                    <td>{{$detail['quantity']}}</td>
-                                    <td class="text-right">
-                                        @php($amount = ($detail['price'] - $detail['discount_on_product']) * $detail['quantity'])
-                                        {{ Helpers::set_symbol($amount) }}
-                                    </td>
-                                </tr>
-                                @php($item_amount += $detail['price'] * $detail['quantity'])
-                                @php($sub_total += $amount)
-                                @php($total_tax += $detail['tax_amount'] * $detail['quantity'])
-                                @php($total_item_discount += $detail['discount_on_product'] * $detail['quantity'])
-                                @endif
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-
-
-                    {{-- Dynamic Fields Display --}}
-                    <div class="card mb-3 border">
-                        <div class="card-header pb-0 border-0">
-                            <h5 class="card-title">{{translate('Dynamic Order Fields')}}</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                {{-- Static Meta Fields --}}
-                                @if($order->sale_channel)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('قناة البيع')}}</h6>
-                                        <p class="font-weight-bold text-dark">{{$order->sale_channel}}</p>
-                                    </div>
-                                @endif
-
-                                @if($order->sale_agent)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('مندوب المبيعات')}}</h6>
-                                        <p class="font-weight-bold text-dark">{{$order->sale_agent}}</p>
-                                    </div>
-                                @endif
-
-                                @if($order->is_organic)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('اورجانيك')}}</h6>
-                                        <span class="badge badge-soft-success">{{translate('نعم')}}</span>
-                                    </div>
-                                @endif
-
-                                @if($order->video_link)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('رابط الفيديو')}}</h6>
-                                        <a href="{{$order->video_link}}" target="_blank"
-                                            class="text-primary">{{translate('عرض الفيديو')}}</a>
-                                    </div>
-                                @endif
-
-                                @if($order->delivery_date)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('تاريخ التوصيل')}}</h6>
-                                        <p class="font-weight-bold text-dark">{{$order->delivery_date->format('Y-m-d')}}</p>
-                                    </div>
-                                @endif
-
-                                @if($order->agent_username)
-                                    <div class="col-md-4 mb-3">
-                                        <h6 class="text-muted small mb-1">{{translate('يوزر نيم المندوب')}}</h6>
-                                        <p class="font-weight-bold text-dark">{{$order->agent_username}}</p>
-                                    </div>
-                                @endif
-
-                                {{-- Dynamic Values --}}
-                                @if($order->dynamicValues && $order->dynamicValues->count() > 0)
-                                                @foreach($order->dynamicValues as $value)
-                                                    <div class="col-md-4 mb-3">
-                                                        <h6 class="text-muted small mb-1">{{$value->field->field_name}}</h6>
-                                                        @if(str_contains($value->field_value, ','))
-                                                            @foreach(explode(',', $value->field_value) as $v)
-                                                                <span class="badge badge-soft-dark">{{ trim($v) }}</span>
-                                                            @endforeach
-                                                        @else
-                                                            <p class="font-weight-bold text-dark">{{$value->field_value}}</p>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-
-                    <div class="row justify-content-md-end mb-3">
-                        <div class="col-md-9 col-lg-8">
-                            <dl class="row">
-                                <dt class="col-6">{{translate('سعر المنتجات')}}:</dt>
-                                <dd class="col-6 text-end">{{ Helpers::set_symbol($item_amount) }}</dd>
-
-                                <dt class="col-6">{{translate('خصم المنتجات')}}:</dt>
-                                <dd class="col-6 text-end">{{ Helpers::set_symbol($total_item_discount) }}</dd>
-
-                                {{-- Tax Hidden --}}
-                                {{-- <dt class="col-6">{{translate('الضريبة')}}:</dt>
-                                <dd class="col-6 text-end">{{ Helpers::set_symbol($total_tax) }}</dd> --}}
-
-                                <dt class="col-6">{{translate('المجموع الفرعي')}}:</dt>
-                                <dd class="col-6 text-end">{{ Helpers::set_symbol($sub_total + $total_tax) }}</dd>
-
-                                {{-- Coupon Discount Hidden --}}
-                                {{-- <dt class="col-6">{{translate('خصم الكوبون')}}:</dt>
-                                <dd class="col-6 text-end">
-                                    - {{ Helpers::set_symbol($order['coupon_discount_amount']) }}</dd> --}}
-
-                                @if($order['order_type'] == 'pos')
-                                    <dt class="col-6">{{translate('خصم إضافي')}}:</dt>
-                                    <dd class="col-6 text-end">
-                                        - {{ Helpers::set_symbol($order['extra_discount']) }}</dd>
-                                @endif
-
-                                <dt class="col-6">{{translate('رسوم التوصيل')}}:</dt>
-                                <dd class="col-6 text-end">
-                                    @if($order['order_type'] == 'self_pickup')
-                                    @php($del_c = 0)
-                                    @else
-                                    @php($del_c = $order['delivery_charge'])
-                                    @endif
-                                    {{ Helpers::set_symbol($del_c) }}
-                                </dd>
-
-                                <dt class="col-6 border-top pt-2 font-weight-bold">{{translate('الإجمالي')}}:</dt>
-                                <dd class="col-6 text-end border-top pt-2 font-weight-bold">
-                                    {{ Helpers::set_symbol($sub_total + $del_c + $total_tax - $order['coupon_discount_amount'] - $order['extra_discount']) }}
-                                </dd>
-                                @php($total_due = ($sub_total + $del_c + $total_tax - $order['coupon_discount_amount'] - $order['extra_discount']))
-                                @if($order['paid_amount'] > 0 || $order['order_type'] == 'pos')
-                                    <dt class="col-6">{{translate('المبلغ المدفوع')}}:</dt>
-                                    <dd class="col-6 text-end"> {{ Helpers::set_symbol($order['paid_amount']) }}</dd>
-                                    @if($order['paid_amount'] >= $total_due)
-                                        <dt class="col-6">{{translate('المبلغ المتبقي للعميل')}}:</dt>
-                                        <dd class="col-6 text-end">
-                                            {{ Helpers::set_symbol($order['paid_amount'] - $total_due) }}</dd>
-                                    @else
-                                        <dt class="col-6">{{translate('المبلغ المتبقي')}}:</dt>
-                                        <dd class="col-6 text-end">
-                                            <div class="d-flex justify-content-end align-items-center gap-2">
-                                                {{ Helpers::set_symbol($total_due - $order['paid_amount']) }}
-                                                <button class="btn btn-outline-primary btn-sm py-1" data-toggle="modal"
-                                                    data-target="#pay-remaining-modal">
-                                                    {{translate('دفع المتبقي')}}
-                                                </button>
-                                            </div>
-                                        </dd>
-                                    @endif
-                                @endif
-                            </dl>
                         </div>
                     </div>
                 </div>
+
+                @php($item_amount = 0)
+                @php($sub_total = 0)
+                @php($total_tax = 0)
+                @php($total_item_discount = 0)
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-align-middle text-dark">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>{{ translate('SL') }}</th>
+                                <th>{{ translate('Item Description') }}</th>
+                                <th>{{ translate('Unit Price') }}</th>
+                                <th>{{ translate('Qty') }}</th>
+                                <th class="text-right">{{ translate('Total') }}</th>
+                                <th class="text-center">{{ translate('Action') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($order->details as $detail)
+                                @if($detail->product_details != null)
+                                    @php($product = json_decode($detail->product_details, true))
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            <div class="media gap-3 max-content">
+                                                <div class="avatar-xl">
+                                                    <img class="img-fit rounded" src="{{$detail->product && $detail->product['image'] != null ? $detail->product['image_fullpath'][0] : asset('assets/admin/img/160x160/img2.jpg')}}" alt="{{ translate('image') }}">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h6 class="mb-1 w-24ch">{{$product['name']}}</h6>
+                                                    @if(count(json_decode($detail['variation'], true)) > 0)
+                                                        @foreach(json_decode($detail['variation'], true)[0] ?? json_decode($detail['variation'], true) as $key1 => $variation)
+                                                            <div class="font-size-sm text-body text-capitalize">
+                                                                <span>{{$key1}} : </span>
+                                                                <span class="font-weight-bold">{{$variation}}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ Helpers::set_symbol($detail['price']) }}</td>
+                                        <td>{{ $detail['quantity'] }}</td>
+                                        <td class="text-right">
+                                            @php($amount = ($detail['price'] - $detail['discount_on_product']) * $detail['quantity'])
+                                            {{ Helpers::set_symbol($amount) }}
+                                        </td>
+                                        <td class="text-center">
+                                            @if($order->order_status == 'new' || $order->order_status == 'scheduled')
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#edit-detail-{{$detail->id}}">
+                                                        <i class="tio-edit"></i>
+                                                    </button>
+                                                    <form action="{{route('admin.orders.delete-item', [$detail['id']])}}" method="post">
+                                                        @csrf @method('delete')
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                            onclick="return confirm('{{translate('Are you sure you want to remove this item?')}}')">
+                                                            <i class="tio-delete"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                
+                                                <!-- Edit Modal -->
+                                                <div class="modal fade" id="edit-detail-{{$detail->id}}" tabindex="-1" role="dialog">
+                                                    <div class="modal-dialog" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">{{$product['name']}}</h5>
+                                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                                            </div>
+                                                            <form action="{{route('admin.orders.update-item', [$detail['id']])}}" method="post">
+                                                                @csrf
+                                                                <div class="modal-body text-left">
+                                                                    <div class="form-group">
+                                                                        <label>{{translate('Price')}}</label>
+                                                                        <input type="number" step="0.01" name="price" class="form-control" value="{{$detail->price}}" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>{{translate('Quantity')}}</label>
+                                                                        <input type="number" name="quantity" class="form-control" value="{{$detail->quantity}}" required min="1">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{translate('Close')}}</button>
+                                                                    <button type="submit" class="btn btn-primary">{{translate('Update')}}</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="badge badge-soft-secondary">{{translate('Locked')}}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @php($item_amount += $detail['price'] * $detail['quantity'])
+                                    @php($sub_total += $amount)
+                                    @php($total_tax += $detail['tax_amount'] * $detail['quantity'])
+                                    @php($total_item_discount += $detail['discount_on_product'] * $detail['quantity'])
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card mb-3 border mt-4">
+    <div class="card-body">
+        <div class="row justify-content-between">
+            <div class="col-12">
+                <dl class="row align-items-center">
+                    <dt class="col-6 text-left mb-2">{{translate('سعر المنتجات')}}:</dt>
+                    <dd class="col-6 text-right mb-2">{{ Helpers::set_symbol($item_amount) }}</dd>
+
+                    <dt class="col-6 text-left mb-2">{{translate('خصم المنتجات')}}:</dt>
+                    <dd class="col-6 text-right mb-2">{{ Helpers::set_symbol($total_item_discount) }}</dd>
+
+                    <dt class="col-6 text-left mb-2">{{translate('المجموع الفرعي')}}:</dt>
+                    <dd class="col-6 text-right mb-2">{{ Helpers::set_symbol($sub_total + $total_tax) }}</dd>
+
+                    <dt class="col-6 text-left mb-2">{{translate('رسوم التوصيل')}}:</dt>
+                    <dd class="col-6 text-right mb-2">
+                        @php($del_c = $order['order_type'] == 'self_pickup' ? 0 : $order['delivery_charge'])
+                        {{ Helpers::set_symbol($del_c) }}
+                    </dd>
+
+                    <div class="col-12">
+                        <hr class="mt-2 mb-3">
+                    </div>
+
+                    <dt class="col-6 text-left font-weight-bold h4">{{translate('الإجمالي')}}:</dt>
+                    <dd class="col-6 text-right font-weight-bold h4">
+                        {{ Helpers::set_symbol($sub_total + $del_c + $total_tax - $order['coupon_discount_amount'] - $order['extra_discount']) }}
+                    </dd>
+
+                    @php($total_due = ($sub_total + $del_c + $total_tax - $order['coupon_discount_amount'] - $order['extra_discount']))
+
+                    @if($order['paid_amount'] > 0 || $order['order_type'] == 'pos')
+                        <dt class="col-6 text-left mt-3">{{translate('المبلغ المدفوع')}}:</dt>
+                        <dd class="col-6 text-right mt-3">{{ Helpers::set_symbol($order['paid_amount']) }}</dd>
+
+                        @if($order['paid_amount'] < $total_due)
+                            <dt class="col-6 text-left">{{translate('المبلغ المتبقي')}}:</dt>
+                            <dd class="col-6 text-right">
+                                <div class="d-flex justify-content-start align-items-center gap-2">
+                                    <span>{{ Helpers::set_symbol($total_due - $order['paid_amount']) }}</span>
+                                    <button class="btn btn-outline-primary btn-sm py-0" data-toggle="modal" data-target="#pay-remaining-modal">
+                                        {{translate('دفع المتبقي')}}
+                                    </button>
+                                </div>
+                            </dd>
+                        @endif
+                    @endif
+                </dl>
             </div>
         </div>
-        @if($order->user_id != null)
+    </div>
+
+
+</div>
+
+
+            </div>
+         </div>
+        </div>
+          @if($order->user_id != null)
         <div class="col-lg-4">
             @if($order['order_type'] != 'pos')
                 <div class="card mb-3">
@@ -412,25 +339,11 @@
                         <div class="mt-2">
                             @if($order['order_type'] != 'pos')
                                 <h6>{{translate('Order Status')}}</h6>
-                                <select name="order_status"
-                                    onchange="route_alert('{{route('admin.orders.status', ['id' => $order['id']])}}'+'&order_status='+ this.value,'{{translate("Change the order status to ") }}'+  this.value.replace(/_/g, ' '))"
-                                    class="form-control">
-                                    <option value="pending" {{$order['order_status'] == 'pending' ? 'selected' : ''}}>
-                                        {{translate('pending')}}</option>
-                                    <option value="confirmed" {{$order['order_status'] == 'confirmed' ? 'selected' : ''}}>
-                                        {{translate('confirmed')}}</option>
-                                    <option value="processing" {{$order['order_status'] == 'processing' ? 'selected' : ''}}>
-                                        {{translate('processing')}}</option>
-                                    <option value="out_for_delivery" {{$order['order_status'] == 'out_for_delivery' ? 'selected' : ''}}>{{translate('Out_For_Delivery')}} </option>
-                                    <option value="delivered" {{$order['order_status'] == 'delivered' ? 'selected' : ''}}>
-                                        {{translate('Delivered')}} </option>
-                                    <option value="returned" {{$order['order_status'] == 'returned' ? 'selected' : ''}}>
-                                        {{translate('Returned')}}</option>
-                                    <option value="failed" {{$order['order_status'] == 'failed' ? 'selected' : ''}}>
-                                        {{translate('Failed')}} </option>
-                                    <option value="canceled" {{$order['order_status'] == 'canceled' ? 'selected' : ''}}>
-                                        {{translate('canceled')}} </option>
-                                </select>
+                                <div class="form-control d-flex align-items-center" style="background:#f8f9fa; cursor:default; min-height:38px;">
+                                    <span class="badge badge-soft-{{ in_array($order['order_status'], ['delivered','scheduled','collected']) ? 'success' : (in_array($order['order_status'], ['canceled','returned','failed']) ? 'danger' : 'warning') }} px-3 py-2" style="font-size:13px;">
+                                        {{ translate(str_replace(['-','_'], ' ', $order['order_status'])) }}
+                                    </span>
+                                </div>
                             @endif
                         </div>
                         <div class="mt-3">
@@ -468,7 +381,7 @@
                 <div class="card mb-3">
                     <div class="card-header">
                         <h4 class="card-header-title">
-                            <i class="tio-info-outlined"></i> {{translate('Additional Order Data')}}
+                            <i class="tio-info-outlined"></i> حقول الطلب المتغيره
                         </h4>
                         <a class="link" data-toggle="modal" data-target="#additional-data-modal" href="javascript:">
                             <i class="tio tio-edit"></i>
@@ -494,14 +407,14 @@
 
                                                     <div class="col-md-6 form-group">
                                                         <label>{{$field->field_name}}</label>
-                                                        
+
                                                         @if($field->field_type == 'text')
                                                             <input type="text" name="dynamic_values[{{$field->id}}]" class="form-control" value="{{$currentVal}}">
                                                         @elseif($field->field_type == 'number')
                                                             <input type="number" name="dynamic_values[{{$field->id}}]" class="form-control" value="{{$currentVal}}">
                                                         @elseif($field->field_type == 'date')
                                                             <input type="date" name="dynamic_values[{{$field->id}}]" class="form-control" value="{{$currentVal}}">
-                                                            
+
                                                         @elseif($field->field_type == 'select')
                                                             <select name="dynamic_values[{{$field->id}}]" class="form-control">
                                                                 <option value="">{{translate('Select')}}</option>
@@ -509,30 +422,30 @@
                                                                     <option value="{{$option}}" {{$currentVal == $option ? 'selected' : ''}}>{{$option}}</option>
                                                                 @endforeach
                                                             </select>
-                                                            
+
                                                         @elseif($field->field_type == 'checkbox')
                                                             <div class="d-flex flex-wrap gap-2">
                                                                 @foreach($field->options_array as $option)
                                                                     <div class="custom-control custom-checkbox">
-                                                                        <input type="checkbox" 
-                                                                            class="custom-control-input" 
-                                                                            id="field_{{$field->id}}_{{$loop->index}}" 
-                                                                            name="dynamic_values[{{$field->id}}][]" 
+                                                                        <input type="checkbox"
+                                                                            class="custom-control-input"
+                                                                            id="field_{{$field->id}}_{{$loop->index}}"
+                                                                            name="dynamic_values[{{$field->id}}][]"
                                                                             value="{{$option}}"
                                                                             {{in_array(trim($option), explode(',', $currentVal)) ? 'checked' : ''}}>
                                                                         <label class="custom-control-label" for="field_{{$field->id}}_{{$loop->index}}">{{$option}}</label>
                                                                     </div>
                                                                 @endforeach
                                                             </div>
-                                                            
+
                                                         @elseif($field->field_type == 'radio')
                                                             <div class="d-flex flex-wrap gap-2">
                                                                 @foreach($field->options_array as $option)
                                                                     <div class="custom-control custom-radio">
-                                                                        <input type="radio" 
-                                                                            class="custom-control-input" 
-                                                                            id="field_{{$field->id}}_{{$loop->index}}" 
-                                                                            name="dynamic_values[{{$field->id}}]" 
+                                                                        <input type="radio"
+                                                                            class="custom-control-input"
+                                                                            id="field_{{$field->id}}_{{$loop->index}}"
+                                                                            name="dynamic_values[{{$field->id}}]"
                                                                             value="{{$option}}"
                                                                             {{$currentVal == $option ? 'checked' : ''}}>
                                                                         <label class="custom-control-label" for="field_{{$field->id}}_{{$loop->index}}">{{$option}}</label>
@@ -555,7 +468,7 @@
                     </div>
                     <div class="card-body">
                         <dl class="row mb-0">
-                    
+
                             @if(isset($dynamic_fields) && $dynamic_fields->count() > 0)
                                 <div class="col-12"></div>
                                 @foreach($dynamic_fields as $field)
@@ -665,11 +578,7 @@
 
         </div>
         @endif
-    </div>
-
-
-</div>
-
+     </div>
 
 
 

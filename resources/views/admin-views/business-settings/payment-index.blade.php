@@ -135,7 +135,7 @@
                                     <div class="payment--gateway-img">
                                         <img class="h-80px"
                                              src="{{Helpers::onErrorImage($additional_data != null ? $additional_data->gateway_image : '',
-                                            asset('storage/app/public/payment_modules/gateway_image').'/' . ($additional_data != null ? $additional_data->gateway_image : ''),
+                                            asset('storage/payment_modules/gateway_image').'/' . ($additional_data != null ? $additional_data->gateway_image : ''),
                                             asset('assets/admin/img/placeholder.png') ,
                                             'payment_modules/gateway_image/')}}"
 

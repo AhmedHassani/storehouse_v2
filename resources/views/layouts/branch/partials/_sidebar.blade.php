@@ -9,7 +9,7 @@
                     <a class="navbar-brand w-75" href="{{route('branch.dashboard')}}" aria-label="Front">
                         <img class="navbar-brand-logo" src="{{Helpers::onErrorImage(
     $logo,
-    asset('storage/app/public/ecommerce') . '/' . $logo,
+    asset('storage/ecommerce') . '/' . $logo,
     asset('assets/admin/img/160x160/img2.jpg'),
     'ecommerce/'
 )}}" alt="{{ translate('Logo') }}">

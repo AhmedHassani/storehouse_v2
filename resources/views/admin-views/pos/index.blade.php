@@ -556,17 +556,51 @@
             }
 
 
+            function checkCustomerSelection() {
+                let customerId = $('#customer').val();
+                let placeOrderBtn = $('#placeOrder button[type="submit"]');
+                if (customerId && customerId !== '') {
+                    placeOrderBtn.prop('disabled', false);
+                    placeOrderBtn.removeClass('btn-secondary').addClass('btn-primary');
+                } else {
+                    placeOrderBtn.prop('disabled', true);
+                    placeOrderBtn.removeClass('btn-primary').addClass('btn-secondary');
+                }
+            }
+
+            $(document).on('change', '#customer', function () {
+                checkCustomerSelection();
+            });
+
             function updateCart() {
                 console.log('Updating cart...');
+                let paidAmountValue = $('#showPaidAmount').val();
+
                 $.post('<?php echo e(route('admin.pos.cart_items')); ?>', { _token: '<?php echo e(csrf_token()); ?>' }, function (data) {
                     console.log('Cart updated successfully');
                     $('#cart').empty().html(data);
+
+                    if (paidAmountValue !== undefined && paidAmountValue !== null) {
+                        $('#showPaidAmount').val(paidAmountValue);
+                    }
+
                     calculateAmountDifference();
+                    checkCustomerSelection(); // Check selection after cart update
                 }).fail(function (xhr, status, error) {
                     console.error('Error updating cart:', error);
                     console.error('Response:', xhr.responseText);
                 });
             }
+
+            // Run on page load
+            $(document).ready(function() {
+                toastr.options = {
+                    "positionClass": "toast-top-right",
+                    "closeButton": true,
+                    "progressBar": true
+                };
+                setTimeout(checkCustomerSelection, 500); // Small delay to ensure everything is rendered
+            });
 
             function store_key(key, value) {
                 $.ajaxSetup({
@@ -590,6 +624,9 @@
                             CloseButton: true,
                             ProgressBar: true
                         });
+                        if(key === 'customer_id') {
+                            checkCustomerSelection();
+                        }
                     },
                 });
             }
@@ -649,6 +686,24 @@
 
             }
 
+            function updatePrice(e) {
+                let element = $(e.target);
+                var valueCurrent = parseFloat(element.val());
+                let key = element.data('key');
+
+                if (isNaN(valueCurrent) || valueCurrent < 0) {
+                    return;
+                }
+
+                $.post('{{ route('admin.pos.updatePrice') }}', {
+                    _token: '{{ csrf_token() }}',
+                    key: key,
+                    price: valueCurrent
+                }, function (data) {
+                    updateCart();
+                });
+            }
+
             $('.js-select2-custom').each(function () {
                 let select2 = $.HSCore.components.HSSelect2.init($(this));
             });
@@ -682,9 +737,33 @@
             $('.js-data-example-ajax-2').select2()
 
             $('#order_place').submit(function (eventObj) {
-                if ($('#customer').val()) {
-                    $(this).append('<input type="hidden" name="user_id" value="' + $('#customer').val() + '" /> ');
+                let customerId = $('#customer').val();
+                if (!customerId) {
+                    toastr.warning('{{translate('Please select a customer first')}}', {
+                        CloseButton: true,
+                        ProgressBar: true
+                    });
+                    return false;
                 }
+
+                // Check for required dynamic fields
+                let valid = true;
+                $('#order_place [required]').each(function() {
+                    if (!$(this).val()) {
+                        valid = false;
+                        $(this).addClass('border-danger');
+                        toastr.error('{{translate('Please fill all required fields')}}: ' + $(this).closest('.form-group').find('label').text().trim(), {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    } else {
+                        $(this).removeClass('border-danger');
+                    }
+                });
+
+                if (!valid) return false;
+
+                $(this).append('<input type="hidden" name="user_id" value="' + customerId + '" /> ');
                 return true;
             });
 

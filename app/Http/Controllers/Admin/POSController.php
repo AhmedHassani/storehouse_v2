@@ -11,19 +11,15 @@ use App\Models\OrderDetail;
 use App\Models\OrderMetaOption;
 use App\Models\Product;
 use App\Models\User;
-use Box\Spout\Common\Exception\InvalidArgumentException;
-use Box\Spout\Common\Exception\IOException;
-use Box\Spout\Common\Exception\UnsupportedTypeException;
-use Box\Spout\Writer\Exception\WriterNotOpenedException;
-use Carbon\Carbon;
+use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Rap2hpoutre\FastExcel\FastExcel;
@@ -138,8 +134,7 @@ class POSController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-
-    public function getCustomers(Request $request): \Illuminate\Http\JsonResponse
+    public function getCustomers(Request $request): JsonResponse
     {
         $key = explode(' ', $request['q']);
         $data = DB::table('users')
@@ -174,7 +169,7 @@ class POSController extends Controller
     public function updateTax(Request $request): RedirectResponse
     {
         if ($request->tax < 0) {
-            Toastr::error(translate('Tax_can_not_be_less_than_0_percent'));
+            \Brian2694\Toastr\Facades\Toastr::error(translate('Tax_can_not_be_less_than_0_percent'));
             return back();
         } elseif ($request->tax > 100) {
             Toastr::error(translate('Tax_can_not_be_more_than_100_percent'));
@@ -197,7 +192,7 @@ class POSController extends Controller
         $total = session()->get('total');
 
         if ($request->type == 'percent' && $request->discount < 0) {
-            Toastr::error(translate('Extra_discount_can_not_be_less_than_0_percent'));
+            Toastr::error(translate('Discount_can_not_be_less_than_0_percent'));
             return back();
         } elseif ($request->type == 'amount' && $request->discount < 0) {
             Toastr::error(translate('Extra_discount_can_not_be_less_than_0'));
@@ -209,7 +204,7 @@ class POSController extends Controller
             Toastr::error(translate('Extra_discount_can_not_be_more_than_total_price'));
             return back();
         } elseif ($request->type == 'percent' && ($request->session()->get('cart')) == null) {
-            Toastr::error(translate('cart_is_empty'));
+            Toastr::error(translate('Product_already_added_in_cart'));
             return back();
         } elseif ($request->type == 'percent' && $request->discount > 0) {
             $extraDiscount = ($subTotal * $request->discount) / 100;
@@ -231,9 +226,9 @@ class POSController extends Controller
     /**
      * Update delivery fee in cart
      * @param Request $request
-     * @return RedirectResponse
+     * @return RedirectResponse|JsonResponse
      */
-    public function updateDeliveryFee(Request $request): RedirectResponse
+    public function updateDeliveryFee(Request $request)
     {
         $cart = $request->session()->get('cart', collect([]));
 
@@ -243,10 +238,14 @@ class POSController extends Controller
             $cart['delivery_fee'] = 0;
         } else {
             $cart['is_free_delivery'] = false;
-            $cart['delivery_fee'] = $request->delivery_fee ?? 0;
+            $cart['delivery_fee'] = $request->filled('fee_customer_payable') ? $request->fee_customer_payable : 0;
         }
 
         $request->session()->put('cart', $cart);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => translate('تم تحديث رسوم التوصيل')], 200);
+        }
 
         Toastr::success(translate('تم تحديث رسوم التوصيل'));
         return back();
@@ -262,6 +261,23 @@ class POSController extends Controller
         $cart = $cart->map(function ($object, $key) use ($request) {
             if ($key == $request->key) {
                 $object['quantity'] = $request->quantity;
+            }
+            return $object;
+        });
+        $request->session()->put('cart', $cart);
+        return response()->json([], 200);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updatePrice(Request $request): JsonResponse
+    {
+        $cart = $request->session()->get('cart', collect([]));
+        $cart = $cart->map(function ($object, $key) use ($request) {
+            if ($key == $request->key) {
+                $object['price'] = $request->price;
             }
             return $object;
         });
@@ -402,11 +418,11 @@ class POSController extends Controller
 
         $this->order->where(['checked' => 0])->update(['checked' => 1]);
 
-        $query = $this->order->pos()->with(['customer', 'branch'])
-            ->when((!is_null($branchId) && $branchId != 'all'), function ($query) use ($branchId) {
+        $query = $this->order->whereIn('order_type', ['pos', 'delivery'])->with(['customer', 'branch'])
+            ->when($request->filled('branch_id') && $branchId != 'all', function ($query) use ($branchId) {
                 return $query->where('branch_id', $branchId);
             })
-            ->when((!is_null($startDate) && !is_null($endDate)), function ($query) use ($startDate, $endDate) {
+            ->when($request->filled('start_date') && $request->filled('end_date'), function ($query) use ($startDate, $endDate) {
                 return $query->whereDate('created_at', '>=', $startDate)
                     ->whereDate('created_at', '<=', $endDate);
             });
@@ -450,94 +466,97 @@ class POSController extends Controller
      */
     public function placeOrder(Request $request)
     {
-        // Check if the cart exists and is not empty
-        if (!$request->session()->has('cart') || count($request->session()->get('cart')) < 1) {
-            Toastr::error(translate('cart_empty_warning'));
-            return back();
-        }
-
-        // Retrieve cart data from session
-        $cart = $request->session()->get('cart');
-        $totalTaxAmount = 0;
-        $productPrice = 0;
-        $order_details = [];
-
-        // Get delivery fee from cart session
-        $delivery_fee = $cart['delivery_fee'] ?? 0;
-        $is_free_delivery = $cart['is_free_delivery'] ?? false;
-        if ($is_free_delivery) {
-            $delivery_fee = 0;
-        }
-
-        // Create a new order instance
-        $order = $this->order->create([
-            'user_id' => session()->has('customer_id') ? session('customer_id') : null,
-            'coupon_discount_title' => $request->coupon_discount_title == 0 ? null : 'coupon_discount_title',
-            'payment_status' => 'unpaid',
-            'order_status' => 'confirmed',
-            'order_type' => 'delivery',
-            'paid_amount' => $request->paid_amount,
-            'coupon_code' => $request->coupon_code ?? null,
-            'payment_method' => $request->type,
-            'transaction_reference' => $request->transaction_reference ?? null,
-            'delivery_charge' => $delivery_fee, // Get from session
-            'delivery_address_id' => $request->delivery_address_id ?? null,
-            'order_note' => null,
-            'checked' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-            'branch_id' => session()->has('branch_id') ? session('branch_id') : 1,
-            'sale_channel' => null,
-            'sale_agent' => null,
-            'is_organic' => 0,
-            'video_link' => null,
-            'delivery_date' => $request->delivery_date,
-            'agent_username' => null,
+        Log::info('POS Place Order: Request received', [
+            'customer_id' => session('customer_id'),
+            'type' => $request->type,
+            'cart_items_count' => session()->has('cart') ? count(session('cart')) : 0
         ]);
 
-        // Save dynamic field values
-        if ($request->has('dynamic_fields')) {
-            foreach ($request->dynamic_fields as $field_id => $value) {
-                if ($value !== null) {
-                    if (is_array($value)) {
-                        $value = implode(', ', $value);
+        // 1. Transaction Start
+        DB::beginTransaction();
+        try {
+            // Check if the cart exists and is not empty
+            if (!$request->session()->has('cart') || count($request->session()->get('cart')) < 1) {
+                Toastr::error(translate('Please_select_a_customer_first'));
+                DB::rollBack();
+                return back();
+            }
+
+            $cart = $request->session()->get('cart');
+            $delivery_charge = $request->filled('fee_customer_payable') ? $request->fee_customer_payable : ($cart['delivery_fee'] ?? 0);
+
+            $totalTaxAmount = 0;
+            $productPrice = 0;
+            $totalProductMainPrice = 0;
+            $order_details = [];
+
+            // 2. Initial Order Creation (Relying on MySQL AUTO_INCREMENT)
+            $order = $this->order->create([
+                'user_id' => session()->has('customer_id') ? session('customer_id') : null,
+                'coupon_discount_title' => $request->coupon_discount_title == 0 ? null : 'coupon_discount_title',
+                'payment_status' => 'unpaid',
+                'order_status' => 'new',
+                'order_type' => 'pos', // Default to POS, might change to delivery below
+                'paid_amount' => $request->paid_amount ?? 0,
+                'coupon_code' => $request->coupon_code ?? null,
+                'payment_method' => $request->type,
+                'transaction_reference' => $request->transaction_reference ?? null,
+                'delivery_charge' => $delivery_charge,
+                'delivery_address_id' => $request->delivery_address_id ?? null,
+                'checked' => 1,
+                'branch_id' => session()->has('branch_id') ? session('branch_id') : 1,
+                'delivery_date' => $request->delivery_date,
+            ]);
+
+            Log::info('POS Place Order: Order instance created', ['order_id' => $order->id]);
+
+            // 3. Process Dynamic Fields & Adjust Order Type
+            if ($request->has('dynamic_fields')) {
+                foreach ($request->dynamic_fields as $field_id => $value) {
+                    if ($value !== null) {
+                        if ($field_id == 9 && $value == 'شركه') {
+                            $order->order_type = 'delivery';
+                        }
+                        if (is_array($value)) {
+                            $value = implode(', ', $value);
+                        }
+                        \App\Models\OrderDynamicFieldValue::create([
+                            'order_id' => $order->id,
+                            'field_id' => $field_id,
+                            'field_value' => $value
+                        ]);
                     }
-                    \App\Models\OrderDynamicFieldValue::create([
-                        'order_id' => $order->id,
-                        'field_id' => $field_id,
-                        'field_value' => $value
-                    ]);
                 }
             }
-        }
 
-        // Process cart items
-        $totalProductMainPrice = 0;
-        foreach ($cart as $c) {
-            if (is_array($c)) {
-                $product = $this->product->find($c['id']);
-                $p['variations'] = gettype($product['variations']) != 'array' ? json_decode($product['variations'], true) : $product['variations'];
+            // Auto-detect delivery if a fee is present
+            if ($delivery_charge > 0) {
+                $order->order_type = 'delivery';
+            }
 
-                // Stock validation removed - allow negative stock in POS
-                // Products can be sold even if stock is 0 or negative
+            // 4. Process Cart Items
+            foreach ($cart as $key => $c) {
+                if (is_array($c) && isset($c['id'])) {
+                    $product = $this->product->find($c['id']);
+                    if (!$product) continue;
 
-                $discountOnProduct = 0;
-                $productSubtotal = ($c['price']) * $c['quantity'];
-                $discountOnProduct += ($c['discount'] * $c['quantity']);
+                    $productSubtotal = ($c['price']) * $c['quantity'];
+                    $discountOnProduct = ($c['discount'] * $c['quantity']);
 
-                if ($product) {
-                    $price = $c['price'];
-                    $product = Helpers::product_data_formatting($product);
+                    $product_data = Helpers::product_data_formatting($product);
                     $order_details[] = [
+                        'order_id' => $order->id,
                         'product_id' => $c['id'],
-                        'product_details' => $product,
+                        'product_details' => json_encode($product_data),
                         'quantity' => $c['quantity'],
-                        'price' => $price,
-                        'tax_amount' => floor(Helpers::tax_calculate($product, $price)),
-                        'discount_on_product' => floor(Helpers::discount_calculate($product, $price)),
+                        'price' => $c['price'],
+                        'tax_amount' => floor(Helpers::tax_calculate($product_data, $c['price'])),
+                        'discount_on_product' => floor(Helpers::discount_calculate($product_data, $c['price'])),
                         'discount_type' => 'discount_on_product',
                         'variant' => json_encode($c['variant']),
                         'variation' => json_encode($c['variations']),
+                        'unit' => $product_data['unit'] ?? 'pc',
+                        'is_stock_decreased' => ($product['is_unlimited'] ?? 0) ? 0 : 1,
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
@@ -545,51 +564,57 @@ class POSController extends Controller
                     $totalTaxAmount += $order_details[count($order_details) - 1]['tax_amount'] * $c['quantity'];
                     $productPrice += $productSubtotal - $discountOnProduct;
                     $totalProductMainPrice += $productSubtotal;
-                }
 
-                // Update product stock ONLY if product is NOT unlimited
-                if (!$product['is_unlimited']) {
-                    $var_store = [];
-                    if (!empty($product['variations'])) {
-                        $type = $c['variant'];
-                        foreach ($product['variations'] as $var) {
-                            if ($type == $var['type']) {
-                                $var['stock'] -= $c['quantity'];
+                    // 5. Update Stock
+                    if (!$product['is_unlimited']) {
+                        $var_store = [];
+                        $variations = gettype($product['variations']) != 'array' ? json_decode($product['variations'], true) : $product['variations'];
+                        if (!empty($variations)) {
+                            foreach ($variations as $var) {
+                                if ($c['variant'] == $var['type']) {
+                                    $var['stock'] -= $c['quantity'];
+                                }
+                                $var_store[] = $var;
                             }
-                            $var_store[] = $var;
                         }
+                        $product->update([
+                            'variations' => json_encode($var_store),
+                            'total_stock' => $product['total_stock'] - $c['quantity'],
+                        ]);
                     }
-
-                    $this->product->where(['id' => $product['id']])->update([
-                        'variations' => json_encode($var_store),
-                        'total_stock' => $product['total_stock'] - $c['quantity'],
-                    ]);
                 }
             }
-        }
 
-        // Calculate total price including discounts, taxes, and extras
-        $totalPrice = $productPrice;
+            // 6. Bulk Insert Order Details
+            if (count($order_details) > 0) {
+                try {
+                    $this->orderDetail->insert($order_details);
+                    Log::info('POS Place Order: Order details inserted', ['order_id' => $order->id, 'count' => count($order_details)]);
+                } catch (\Exception $e) {
+                    Log::error('POS Place Order: Order details insertion failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+                    throw new \Exception('Failed to insert order details: ' . $e->getMessage());
+                }
+            } else {
+                throw new \Exception('No valid items in cart to create order');
+            }
 
-        if (isset($cart['extra_discount'])) {
-            $extra_discount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0
-                ? (($totalProductMainPrice * $cart['extra_discount']) / 100)
-                : $cart['extra_discount'];
-            $totalPrice -= $extra_discount;
-        }
+            // 7. Calculate Final Amounts
+            $extra_discount = 0;
+            if (isset($cart['extra_discount'])) {
+                $extra_discount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0
+                    ? (($totalProductMainPrice * $cart['extra_discount']) / 100)
+                    : $cart['extra_discount'];
+            }
 
-        $tax = isset($cart['tax']) ? $cart['tax'] : 0;
-        $totalTaxAmount = ($tax > 0) ? (($totalPrice * $tax) / 100) : $totalTaxAmount;
+            $tax = $cart['tax'] ?? 0;
+            $totalTaxAmount = ($tax > 0) ? (($productPrice * $tax) / 100) : $totalTaxAmount;
 
-        try {
-            // Save order details
-            $order->extra_discount = $extra_discount ?? 0;
+            $order->extra_discount = $extra_discount;
             $order->total_tax_amount = $totalTaxAmount;
-            $order_amount = $totalPrice + $totalTaxAmount + $order->delivery_charge;
+            $order_amount = $productPrice + $totalTaxAmount + $order->delivery_charge - $extra_discount;
             $order->order_amount = $order_amount;
-            $order->coupon_discount_amount = 0.00;
 
-            // Payment Status logic
+            // 8. Payment Status
             $paid_amount = $request->paid_amount ?? 0;
             if ($paid_amount >= $order_amount) {
                 $order->payment_status = 'paid';
@@ -599,82 +624,75 @@ class POSController extends Controller
                 $order->payment_status = 'unpaid';
             }
 
-            $order->save();
-
-            foreach ($order_details as $key => $item) {
-                $order_details[$key]['order_id'] = $order->id;
-            }
-
-            $this->orderDetail->insert($order_details);
-
-            // Send notifications to the user
-            if ($order->user_id) {
-                $user = User::find($order->user_id);
-                $userFcmToken = $user?->cm_firebase_token;
-                $value = Helpers::order_status_update_message('confirmed');
+            // 9. Boxy Delivery Integration
+            $boxy_verified = false;
+            // Removed check for business setting and user_id to allow automatic guest orders
+            if ($order->order_type == 'delivery') {
                 try {
-                    if ($value && $userFcmToken) {
-                        $data = [
-                            'title' => 'Order',
-                            'description' => $value,
-                            'order_id' => $order->id,
-                            'image' => '',
-                            'type' => 'order',
-                        ];
-                        Helpers::send_push_notif_to_device($userFcmToken, $data);
-                    }
-
-                    $emailServices = Helpers::get_business_settings('mail_config');
-                    if (isset($emailServices['status']) && $emailServices['status'] == 1 && isset($user)) {
-                        Mail::to($user->email)->send(new \App\Mail\OrderPlaced($order->id));
+                    $boxyService = new \App\Services\BoxyDeliveryService();
+                    $boxyResponse = $boxyService->sendOrder($order);
+                    if ($boxyResponse['success']) {
+                        $responseData = $boxyResponse['data'];
+                        $order->boxy_uid = $responseData['object']['order']['uid'] ?? null;
+                        $order->boxy_platform_code = $responseData['object']['order']['platform_code'] ?? null;
+                        $boxy_verified = true;
+                    } else {
+                        Toastr::warning(translate('Boxy Delivery Error: ') . $boxyResponse['message']);
+                        Log::warning('Boxy API Warning: ' . ($boxyResponse['message'] ?? 'Unknown error'));
                     }
                 } catch (\Exception $e) {
+                    Log::error('Boxy Integration Error: ' . $e->getMessage());
                 }
             }
 
-            // Send to Boxy Delivery
-            try {
-                $boxyService = new \App\Services\BoxyDeliveryService();
-                $boxyResponse = $boxyService->sendOrder($order);
-                if ($boxyResponse['success']) {
-                    // Save Boxy UID and Platform Code
-                    $responseData = $boxyResponse['data'];
-                    if (isset($responseData['object']['order']['uid'])) {
-                        $order->boxy_uid = $responseData['object']['order']['uid'];
-                    }
-                    if (isset($responseData['object']['order']['platform_code'])) {
-                        $order->boxy_platform_code = $responseData['object']['order']['platform_code'];
-                    }
-                    $order->save();
-                } else {
-                    \Illuminate\Support\Facades\Log::warning('Boxy API Warning: ' . ($boxyResponse['message'] ?? 'Unknown error'));
-                    $errorMsg = 'Order placed but failed to send to Boxy Delivery';
-                    if (isset($boxyResponse['message'])) {
-                        // Try to parse JSON error message if exists
-                        $decoded = json_decode($boxyResponse['message'], true);
-                        if ($decoded && isset($decoded['message'])) {
-                            $errorMsg .= ': ' . $decoded['message'];
-                        } elseif (is_string($boxyResponse['message'])) {
-                            $errorMsg .= ': ' . $boxyResponse['message'];
-                        }
-                    }
-                    Toastr::warning(translate($errorMsg));
-                }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('Boxy Integration Error: ' . $e->getMessage());
+            // 10. Final Save and Commit
+            // Force save all changes to the order
+            $order->timestamps = false; // Don't update timestamps again
+            $order->save();
+
+            // Double-check that order exists in database
+            $verifyOrder = $this->order->find($order->id);
+            if (!$verifyOrder) {
+                throw new \Exception('Order failed to persist in database');
             }
 
-            // Clear the cart and customer session data
+            DB::commit();
+            Log::info('POS Place Order: Completed successfully', [
+                'order_id' => $order->id,
+                'order_type' => $order->order_type,
+                'boxy_verified' => $boxy_verified
+            ]);
+
+            // 11. Cleanup and Notif
             session()->forget(['cart', 'customer_id', 'branch_id']);
             session(['last_order' => $order->id]);
 
+            if ($order->user_id) {
+                try {
+                    $user = User::find($order->user_id);
+                    $emailServices = Helpers::get_business_settings('mail_config');
+                    if (isset($emailServices['status']) && $emailServices['status'] == 1 && $user?->email) {
+                        Mail::to($user->email)->send(new \App\Mail\OrderPlaced($order->id));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Notification Error: ' . $e->getMessage());
+                }
+            }
+
             Toastr::success(translate('order_placed_successfully'));
             return back();
+
         } catch (\Exception $e) {
-            Toastr::warning(translate('failed_to_place_order'));
+            DB::rollBack();
+            Log::error('POS Place Order: Critical failure', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            Toastr::error(translate('Order_placement_failed: ') . $e->getMessage());
             return back();
         }
     }
+
 
     /**
      * @param $id
@@ -771,20 +789,15 @@ class POSController extends Controller
     /**
      * @param Request $request
      * @return string|StreamedResponse
-     * @throws IOException
-     * @throws InvalidArgumentException
-     * @throws UnsupportedTypeException
-     * @throws WriterNotOpenedException
      */
     public function exportOrders(Request $request): StreamedResponse|string
     {
-        $queryParam = [];
         $search = $request['search'];
         $branchId = $request['branch_id'];
         $startDate = $request['start_date'];
         $endDate = $request['end_date'];
 
-        $query = $this->order->pos()->with(['customer', 'branch'])
+        $query = $this->order->whereIn('order_type', ['pos', 'delivery'])->with(['customer', 'branch'])
             ->when((!is_null($branchId) && $branchId != 'all'), function ($query) use ($branchId) {
                 return $query->where('branch_id', $branchId);
             })
@@ -792,11 +805,10 @@ class POSController extends Controller
                 return $query->whereDate('created_at', '>=', $startDate)
                     ->whereDate('created_at', '<=', $endDate);
             });
-        $queryParam = ['branch_id' => $branchId, 'start_date' => $startDate, 'end_date' => $endDate];
 
-        if ($request->has('search')) {
-            $key = explode(' ', $request['search']);
-            $query = $query->where(function ($q) use ($key) {
+        if ($search) {
+            $key = explode(' ', $search);
+            $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")

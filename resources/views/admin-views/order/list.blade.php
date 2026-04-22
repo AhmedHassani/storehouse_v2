@@ -76,38 +76,12 @@
                         </form>
                     </div>
                     <div class="col-sm-4 col-md-6 col-lg-8 d-flex justify-content-end gap-2">
-                        <div class="dropdown mr-2">
-                            <button type="button" class="btn btn-outline-secondary" data-toggle="dropdown"
-                                aria-expanded="false">
-                                <i class="tio-settings"></i> {{ translate('bulk_action') }} <i class="tio-chevron-down"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right">
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('pending')">
-                                    {{ translate('pending') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('confirmed')">
-                                    {{ translate('confirmed') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('processing')">
-                                    {{ translate('processing') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('out_for_delivery')">
-                                    {{ translate('out_for_delivery') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('delivered')">
-                                    {{ translate('delivered') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('returned')">
-                                    {{ translate('returned') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('failed')">
-                                    {{ translate('failed') }}
-                                </button>
-                                <button type="button" class="dropdown-item" onclick="submitBulkStatus('canceled')">
-                                    {{ translate('canceled') }}
-                                </button>
-                            </div>
-                        </div>
+                        @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('order.edit'))
+                        <button type="button" id="btn-ready-to-pickup" class="btn btn-success mr-2" disabled onclick="submitBulkReadyToPickup()">
+                            <i class="tio-checkmark-circle"></i> {{ translate('Ready to Pick Up') }}
+                            <span id="selected-count" class="badge badge-light ml-1" style="display:none;">0</span>
+                        </button>
+                        @endif
                         <div>
                             <button type="button" class="btn btn-outline-primary" data-toggle="dropdown"
                                 aria-expanded="false">
@@ -128,9 +102,8 @@
                 </div>
             </div>
 
-            <form action="{{route('admin.orders.bulk-status')}}" method="POST" id="bulk-status-form">
+            <form action="{{route('admin.orders.bulk-ready-to-pickup')}}" method="POST" id="bulk-status-form">
                 @csrf
-                <input type="hidden" name="order_status" id="bulk-status-input" value="">
                 <div class="table-responsive datatable-custom">
                 <table
                     class="table table-hover table-borderless table-thead-bordered table-nowrap table-align-middle card-table text-dark">
@@ -215,47 +188,12 @@
                                     @endif
                                 </td>
                                 <td class="text-capitalize">
-                                    <div class="dropdown">
-                                        <button class="btn btn-soft-secondary btn-sm dropdown-toggle
-                                                            {{$order['order_status'] == 'pending' ? 'btn-soft-info' : ''}}
-                                                            {{$order['order_status'] == 'confirmed' ? 'btn-soft-info' : ''}}
-                                                            {{$order['order_status'] == 'processing' ? 'btn-soft-warning' : ''}}
-                                                            {{$order['order_status'] == 'out_for_delivery' ? 'btn-soft-warning' : ''}}
-                                                            {{$order['order_status'] == 'delivered' ? 'btn-soft-success' : ''}}
-                                                            {{$order['order_status'] == 'returned' ? 'btn-soft-danger' : ''}}
-                                                            {{$order['order_status'] == 'failed' ? 'btn-soft-danger' : ''}}
-                                                            {{$order['order_status'] == 'canceled' ? 'btn-soft-danger' : ''}}"
-                                            type="button" id="dropdownMenuButton{{$order['id']}}" data-toggle="dropdown" data-boundary="viewport"
-                                            aria-haspopup="true" aria-expanded="false">
-                                            {{translate($order['order_status'])}}
-                                        </button>
-                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton{{$order['id']}}">
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'pending'])}}','{{translate('Change status to pending ?')}}')"
-                                                href="javascript:">{{translate('pending')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'confirmed'])}}','{{translate('Change status to confirmed ?')}}')"
-                                                href="javascript:">{{translate('confirmed')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'processing'])}}','{{translate('Change status to processing ?')}}')"
-                                                href="javascript:">{{translate('processing')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'out_for_delivery'])}}','{{translate('Change status to out_for_delivery ?')}}')"
-                                                href="javascript:">{{translate('out_for_delivery')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'delivered'])}}','{{translate('Change status to delivered ?')}}')"
-                                                href="javascript:">{{translate('delivered')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'returned'])}}','{{translate('Change status to returned ?')}}')"
-                                                href="javascript:">{{translate('returned')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'failed'])}}','{{translate('Change status to failed ?')}}')"
-                                                href="javascript:">{{translate('failed')}}</a>
-                                            <a class="dropdown-item"
-                                                onclick="route_alert('{{route('admin.orders.status', ['id' => $order['id'], 'order_status' => 'canceled'])}}','{{translate('Change status to canceled ?')}}')"
-                                                href="javascript:">{{translate('canceled')}}</a>
-                                        </div>
-                                    </div>
+                                    <span class="badge badge-soft-{{
+                                        in_array($order['order_status'], ['delivered', 'partially-delivered']) ? 'success' : (
+                                        in_array($order['order_status'], ['new', 'scheduled', 'collecting', 'collected', 'in-transit', 'out-for-delivery']) ? 'info' : 'danger')
+                                    }}" style="font-size:12px; padding:6px 10px;">
+                                        {{translate($order['order_status'])}}
+                                    </span>
                                 </td>
                                 <td class="text-capitalize">
                                     @if($order['order_type'] == 'self_pickup')
@@ -304,42 +242,76 @@
 
 @push('script_2')
     <script>
+        function updateReadyBtn() {
+            var count = $('.order-checkbox:checked').length;
+            var $btn = $('#btn-ready-to-pickup');
+            var $count = $('#selected-count');
+            if (count > 0) {
+                $btn.prop('disabled', false);
+                $count.text(count).show();
+            } else {
+                $btn.prop('disabled', true);
+                $count.hide();
+            }
+        }
+
         $(document).on('change', '#select-all-orders', function () {
             $('.order-checkbox').prop('checked', this.checked);
+            updateReadyBtn();
         });
 
         $(document).on('change', '.order-checkbox', function () {
-            if ($('.order-checkbox:checked').length == $('.order-checkbox').length) {
-                $('#select-all-orders').prop('checked', true);
-            } else {
-                $('#select-all-orders').prop('checked', false);
-            }
+            var all = $('.order-checkbox').length;
+            var checked = $('.order-checkbox:checked').length;
+            $('#select-all-orders').prop('checked', all === checked);
+            updateReadyBtn();
         });
 
-        function submitBulkStatus(status) {
-            if ($('.order-checkbox:checked').length === 0) {
-                Swal.fire({
-                    title: '{{translate("Warning")}}',
-                    text: '{{translate("Please select at least one order")}}',
-                    icon: 'warning',
-                    confirmButtonText: '{{translate("OK")}}'
-                });
-                return;
-            }
-            $('#bulk-status-input').val(status);
+        function submitBulkReadyToPickup() {
+            var $checked = $('.order-checkbox:checked');
+            var count = $checked.length;
+            if (count === 0) return;
+
+            var ids = [];
+            $checked.each(function () {
+                ids.push($(this).val());
+            });
+
             Swal.fire({
-                title: '{{translate("Are you sure?")}}',
-                text: '{{translate("You want to change status to ")}}' + status,
-                icon: 'warning',
+                title: '{{translate("Ready to Pick Up?")}}',
+                text: '{{translate("Send")}} ' + count + ' {{translate("order(s) to Boxy as Ready to Pick Up?")}}',
+                type: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '{{translate("Yes, change it!")}}'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $('#bulk-status-form').submit();
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: 'default',
+                confirmButtonText: '{{translate("Yes, Send!")}}',
+                cancelButtonText: '{{translate("Cancel")}}',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.value) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("admin.orders.bulk-ready-to-pickup") }}';
+                    form.style.display = 'none';
+
+                    var csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = '{{ csrf_token() }}';
+                    form.appendChild(csrfInput);
+
+                    for (var i = 0; i < ids.length; i++) {
+                        var idInput = document.createElement('input');
+                        idInput.type = 'hidden';
+                        idInput.name = 'order_ids[]';
+                        idInput.value = ids[i];
+                        form.appendChild(idInput);
+                    }
+
+                    document.body.appendChild(form);
+                    form.submit();
                 }
-            })
+            });
         }
     </script>
 @endpush

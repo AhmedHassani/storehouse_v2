@@ -27,7 +27,7 @@ class InternalPointPayController extends Controller
                     ->update([
                         'payment_method' => 'internal_point',
                         'transaction_reference' => $tr_ref,
-                        'order_status' => 'confirmed',
+                        'order_status' => 'new',
                         'payment_status' => 'paid',
                         'updated_at' => now(),
                     ]);

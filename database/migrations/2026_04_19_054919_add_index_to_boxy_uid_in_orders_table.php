@@ -4,15 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('boxy_uid')->nullable()->index()->after('agent_username');
-            $table->string('boxy_platform_code')->nullable()->after('boxy_uid');
+            $table->index('boxy_uid');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['boxy_uid', 'boxy_platform_code']);
+            $table->dropIndex(['boxy_uid']);
         });
     }
 };

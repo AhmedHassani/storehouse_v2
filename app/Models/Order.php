@@ -107,13 +107,6 @@ class Order extends Model
 
     public static function booted()
     {
-        static::creating(function ($order) {
-            // Generate a custom Order ID
-            if (!$order->id) {
-                // If order_id needs to follow a custom format like ORD-XXXX, based on the last inserted order
-                $lastOrder = self::latest('id')->first();
-                $order->id = $lastOrder ? $lastOrder->id + 1 : 100001; // Defaulting to 100000 if no last order exists
-            }
-        });
+        // Relying on database AUTO_INCREMENT for atomic ID generation
     }
 }

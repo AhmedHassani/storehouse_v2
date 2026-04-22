@@ -467,7 +467,7 @@ class Helpers
 
     public static function order_status_update_message($status)
     {
-        if ($status == 'pending') {
+        if ($status == 'pending' || $status == 'new') {
             $data = self::get_business_settings('order_pending_message');
         } elseif ($status == 'confirmed') {
             $data = self::get_business_settings('order_confirmation_msg');
@@ -492,13 +492,13 @@ class Helpers
         } elseif ($status == 'customer_notify_message') {
             $data = self::get_business_settings('customer_notify_message');
         } else {
-            $data = '{"status":"0","message":""}';
+            $data = ['status' => "0", 'message' => ""];
         }
 
-        if ($data == null || $data['status'] == 0) {
+        if ($data == null || !is_array($data) || (isset($data['status']) && $data['status'] == 0)) {
             return 0;
         }
-        return $data['message'];
+        return $data['message'] ?? 0;
     }
 
     public static function day_part()

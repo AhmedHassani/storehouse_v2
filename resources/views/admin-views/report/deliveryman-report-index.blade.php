@@ -134,19 +134,19 @@
                             </td>
                             <td>{{ Helpers::set_symbol($order['order_amount']) }}</td>
                             <td class="text-capitalize">
-                                @if($order['order_status']=='pending')
+                                @if($order['order_status']=='new')
                                     <span class="badge badge-soft-info ml-2 ml-sm-3">
-                                        <span class="legend-indicator bg-info"></span>{{translate('pending')}}
+                                        <span class="legend-indicator bg-info"></span>{{translate('new')}}
                                     </span>
-                                @elseif($order['order_status']=='confirmed')
+                                @elseif($order['order_status']=='scheduled')
                                     <span class="badge badge-soft-info ml-2 ml-sm-3">
-                                        <span class="legend-indicator bg-info"></span>{{translate('confirmed')}}
+                                        <span class="legend-indicator bg-info"></span>{{translate('scheduled')}}
                                     </span>
-                                @elseif($order['order_status']=='processing')
+                                @elseif(in_array($order['order_status'], ['collecting', 'collected', 'in-transit']))
                                     <span class="badge badge-soft-warning ml-2 ml-sm-3">
                                         <span class="legend-indicator bg-warning"></span>{{translate('processing')}}
                                     </span>
-                                @elseif($order['order_status']=='out_for_delivery')
+                                @elseif($order['order_status']=='out-for-delivery')
                                     <span class="badge badge-soft-warning ml-2 ml-sm-3">
                                         <span class="legend-indicator bg-warning"></span>{{translate('out_for_delivery')}}
                                     </span>
@@ -156,7 +156,7 @@
                                     </span>
                                 @else
                                     <span class="badge badge-soft-danger ml-2 ml-sm-3">
-                                        <span class="legend-indicator bg-danger"></span>{{str_replace('_',' ',$order['order_status'])}}
+                                        <span class="legend-indicator bg-danger"></span>{{str_replace('-',' ',$order['order_status'])}}
                                     </span>
                                 @endif
                             </td>

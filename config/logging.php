@@ -99,6 +99,13 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'boxy_webhook' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/boxy_webhook.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
     ],
 
 ];
