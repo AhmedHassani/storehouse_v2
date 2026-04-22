@@ -24,21 +24,13 @@
 
     <main id="content" role="main" class="main">
         <div class="d-flex flex-column flex-md-row min-vh-100">
-            <div class="d--none d-md-flex justify-content-center flex-grow-1 bg-light login-bg-box md-w-50"
-                data-bg-img="{{asset('assets/admin/img/login_bg.png')}}">
-                <div class="login-left-content p-3">
-                    <a class="d-flex mb-4" href="javascript:">
-                        <img class="z-index-2 height-60px" src="{{$logo}}" alt="{{ translate('image') }}">
-                    </a>
-
-                    <h3 class="mb-0">{{ translate('Your') }} <br /> {{ translate('All Service') }}</h3>
-                    <h2 class="text-primary">{{ translate('in one field') }}....</h2>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-white d-flex justify-content-center md-w-50">
-                <div class="card-content-wrap pb-5 pb-md-0">
+            <div class="flex-grow-1 bg-white d-flex justify-content-center align-items-center w-100">
+                <div class="card-content-wrap pb-5 pb-md-0 w-100" style="max-width: 500px;">
                     <div class="card-body">
-                        <div class="software-version d-flex justify-content-end">
+                        <div class="d-flex justify-content-center mb-4">
+                            <img class="z-index-2 height-60px" src="{{ $logo }}" alt="{{ translate('Image Description') }}">
+                        </div>
+                        <div class="software-version d-flex justify-content-end mb-2">
                             <label
                                 class="badge badge-soft-success __login-badge text-primary">{{ translate('Software version') }}
                                 : {{ env('SOFTWARE_VERSION') }}</label>
