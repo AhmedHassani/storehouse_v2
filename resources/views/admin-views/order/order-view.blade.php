@@ -61,7 +61,7 @@
                                                 <div class="d-flex gap-2 mt-2 flex-wrap">
                                                     <form action="{{route('admin.orders.ready-to-pickup', $order['id'])}}" method="post">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('{{translate('Send Ready to Pick Up to Boxy?')}}')">
+                                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('{{translate('Send Ready to Pick Up to Boxy?')}}')" {{ $order['order_status'] != 'new' ? 'disabled' : '' }}>
                                                             <i class="tio-checkmark-circle"></i> {{translate('Ready to Pick Up')}}
                                                         </button>
                                                     </form>
@@ -360,7 +360,7 @@
                                 </select>
                             @endif
                         </div>
-                        @if($order['order_type'] != 'self_pickup' && $order['order_type'] != 'pos')
+                        @if($order['order_type'] != 'self_pickup' && $order['order_type'] != 'pos' && !$order['boxy_uid'])
                             <div class="mt-3">
                                 <h6>{{translate('Delivery Man')}}</h6>
                                 <select class="form-control" name="delivery_man_id" id="select-delivery-man">

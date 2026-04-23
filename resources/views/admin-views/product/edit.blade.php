@@ -316,11 +316,8 @@
             // Check initial state on page load
             function toggleStockField() {
                 if ($('#is_unlimited').is(':checked')) {
-                    $('#product_stock').prop('readonly', true);
-                    $('#product_stock').val(0);
                     $('#product_stock').prop('required', false);
                 } else {
-                    $('#product_stock').prop('readonly', false);
                     $('#product_stock').prop('required', true);
                 }
             }
@@ -331,9 +328,6 @@
             // Run on checkbox change
             $('#is_unlimited').on('change', function () {
                 toggleStockField();
-                if (!$(this).is(':checked') && $('#product_stock').val() == 0) {
-                    $('#product_stock').val('');
-                }
             });
         });
 

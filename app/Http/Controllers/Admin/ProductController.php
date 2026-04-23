@@ -329,7 +329,7 @@ class ProductController extends Controller
         $product->discount_type = $request->discount_type;
         $product->total_stock = $request->total_stock;
 
-        // Set is_unlimited - if checked (1), stock won't decrease; if unchecked (0), stock will decrease even to negative
+        // Set is_unlimited - if checked (1), allow selling even if stock is 0; if unchecked (0), block if out of stock
         $product->is_unlimited = $request->has('is_unlimited') ? 1 : 0;
         $product->is_featured = $request->has('is_featured') ? 1 : 0;
 

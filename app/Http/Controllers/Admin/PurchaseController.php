@@ -18,16 +18,24 @@ class PurchaseController extends Controller
     public function index(Request $request)
     {
         $search = $request['search'];
+        $supplier_id = $request['supplier_id'];
         $query = Purchase::with('supplier');
 
+        if ($supplier_id && $supplier_id != 'all') {
+            $query->where('supplier_id', $supplier_id);
+        }
+
         if ($search) {
-            $query->whereHas('supplier', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            })->orWhere('id', $search);
+            $query->where(function($q) use ($search) {
+                $q->whereHas('supplier', function ($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                })->orWhere('id', $search);
+            });
         }
 
         $purchases = $query->orderBy('created_at', 'desc')->paginate(25);
-        return view('admin-views.purchase.index', compact('purchases', 'search'));
+        $suppliers = Supplier::orderBy('name')->get();
+        return view('admin-views.purchase.index', compact('purchases', 'search', 'suppliers', 'supplier_id'));
     }
 
     public function create()

@@ -553,7 +553,7 @@ class POSController extends Controller
                         'variant' => json_encode($c['variant']),
                         'variation' => json_encode($c['variations']),
                         'unit' => $product_data['unit'] ?? 'pc',
-                        'is_stock_decreased' => ($product['is_unlimited'] ?? 0) ? 0 : 1,
+                        'is_stock_decreased' => 1,
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
@@ -563,22 +563,20 @@ class POSController extends Controller
                     $totalProductMainPrice += $productSubtotal;
 
                     // 5. Update Stock
-                    if (!$product['is_unlimited']) {
-                        $var_store = [];
-                        $variations = gettype($product['variations']) != 'array' ? json_decode($product['variations'], true) : $product['variations'];
-                        if (!empty($variations)) {
-                            foreach ($variations as $var) {
-                                if ($c['variant'] == $var['type']) {
-                                    $var['stock'] -= $c['quantity'];
-                                }
-                                $var_store[] = $var;
+                    $var_store = [];
+                    $variations = gettype($product['variations']) != 'array' ? json_decode($product['variations'], true) : $product['variations'];
+                    if (!empty($variations)) {
+                        foreach ($variations as $var) {
+                            if ($c['variant'] == $var['type']) {
+                                $var['stock'] -= $c['quantity'];
                             }
+                            $var_store[] = $var;
                         }
-                        $product->update([
-                            'variations' => json_encode($var_store),
-                            'total_stock' => $product['total_stock'] - $c['quantity'],
-                        ]);
                     }
+                    $product->update([
+                        'variations' => json_encode($var_store),
+                        'total_stock' => $product['total_stock'] - $c['quantity'],
+                    ]);
                 }
             }
 

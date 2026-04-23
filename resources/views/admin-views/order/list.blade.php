@@ -134,7 +134,7 @@
                                 <td>
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input order-checkbox" name="order_ids[]" value="{{$order['id']}}"
-                                            id="order-{{$order['id']}}">
+                                            id="order-{{$order['id']}}" {{ $order['order_status'] != 'new' ? 'disabled' : '' }}>
                                         <label class="custom-control-label" for="order-{{$order['id']}}"></label>
                                     </div>
                                 </td>

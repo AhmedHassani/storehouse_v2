@@ -330,17 +330,9 @@
         $(document).ready(function() {
             $('#is_unlimited').on('change', function() {
                 if ($(this).is(':checked')) {
-                    // When unlimited is checked: disable stock input and set to 0
-                    $('#product_stock').prop('readonly', true);
-                    $('#product_stock').val(0);
                     $('#product_stock').prop('required', false);
                 } else {
-                    // When unlimited is unchecked: enable stock input and make required
-                    $('#product_stock').prop('readonly', false);
                     $('#product_stock').prop('required', true);
-                    if ($('#product_stock').val() == 0) {
-                        $('#product_stock').val('');
-                    }
                 }
             });
         });

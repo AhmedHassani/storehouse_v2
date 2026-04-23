@@ -2190,7 +2190,7 @@
   'Order status updated & Boxy notified (Ready to Pick Up)!' => 'Order status updated & Boxy notified (Ready to Pick Up)!',
   'Boxy updated successfully! Order status changed to scheduled.' => 'Boxy updated successfully! Order status changed to scheduled.',
   'Send Ready to Pick Up to Boxy?' => 'Send Ready to Pick Up to Boxy ',
-  'Ready to Pick Up' => 'Ready to Pick Up',
+  'Ready to Pick Up' => 'جاهز للاستلام',
   'Boxy updated: Ready to Pick Up! Status set to Scheduled.' => 'Boxy updated: Ready to Pick Up! Status set to Scheduled.',
   'Ready to Pick Up?' => 'Ready to Pick Up ',
   'Send' => 'Send',

@@ -28,7 +28,15 @@
                             </h5>
 
                             <div class="d-flex flex-wrap gap-2">
-                                <form action="{{url()->current()}}" method="GET">
+                                <form action="{{url()->current()}}" method="GET" class="d-flex gap-2">
+                                    <select name="supplier_id" class="form-control" onchange="this.form.submit()" style="min-width: 200px;">
+                                        <option value="all">{{translate('كل الموردين')}}</option>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{$supplier->id}}" {{ isset($supplier_id) && $supplier_id == $supplier->id ? 'selected' : '' }}>
+                                                {{$supplier->name}}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     <div class="input-group input-group-merge input-group-custom">
                                         <div class="input-group-prepend">
                                             <div class="input-group-text">

@@ -72,7 +72,7 @@
                             class="js-data-example-ajax-2 form-control js-select2-custom m-1">
                             <option value="" selected disabled>{{translate('Walking Customer')}}</option>
                             @foreach($users as $user)
-                                <option value="{{$user['id']}}" {{ session()->get('customer_id') == $user['id'] ? 'selected' : '' }}>{{$user['f_name'] . ' ' . $user['l_name'] }}</option>
+                                <option value="{{$user['id']}}" {{ session()->get('customer_id') == $user['id'] ? 'selected' : '' }}>{{$user['f_name'] . ' ' . $user['l_name'] }} ({{$user['phone']}})</option>
                             @endforeach
                         </select>
                         <button class="btn btn-success rounded text-nowrap" id="add_new_customer" type="button"

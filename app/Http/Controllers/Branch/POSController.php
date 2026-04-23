@@ -452,8 +452,8 @@ class POSController extends Controller
                         Toastr::error(translate($product->name . ' is out of stock'));
                         return back();
                     }
-                    $product->total_stock -= $c['quantity'];
                 }
+                $product->total_stock -= $c['quantity'];
 
                 if ($product) {
                     $price = $c['price'];
@@ -468,6 +468,7 @@ class POSController extends Controller
                         'discount_type' => 'discount_on_product',
                         'variant' => json_encode($c['variant']),
                         'variation' => json_encode($c['variations']),
+                        'is_stock_decreased' => 1,
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
@@ -478,23 +479,21 @@ class POSController extends Controller
                 }
 
                 // Update product stock ONLY if product is NOT unlimited
-                if (!$product['is_unlimited']) {
-                    $varStore = [];
-                    if (!empty($product['variations'])) {
-                        $type = $c['variant'];
-                        foreach ($product['variations'] as $var) {
-                            if ($type == $var['type']) {
-                                $var['stock'] -= $c['quantity'];
-                            }
-                            $varStore[] = $var;
+                $varStore = [];
+                if (!empty($product['variations'])) {
+                    $type = $c['variant'];
+                    foreach ($product['variations'] as $var) {
+                        if ($type == $var['type']) {
+                            $var['stock'] -= $c['quantity'];
                         }
+                        $varStore[] = $var;
                     }
-
-                    $this->product->where(['id' => $product['id']])->update([
-                        'variations' => json_encode($varStore),
-                        'total_stock' => $product['total_stock'] - $c['quantity'],
-                    ]);
                 }
+
+                $this->product->where(['id' => $product['id']])->update([
+                    'variations' => json_encode($varStore),
+                    'total_stock' => $product['total_stock'] - $c['quantity'],
+                ]);
             }
         }
 
