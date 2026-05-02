@@ -146,6 +146,12 @@ class PurchaseController extends Controller
         Toastr::success(translate('Purchase deleted!'));
         return back();
     }
+
+    public function print($id)
+    {
+        $purchase = Purchase::with(['details.product', 'supplier'])->findOrFail($id);
+        return view('admin-views.purchase.print', compact('purchase'));
+    }
     public function edit($id)
     {
         $purchase = Purchase::with(['details'])->findOrFail($id);

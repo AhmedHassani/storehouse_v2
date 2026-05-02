@@ -132,7 +132,7 @@
                                         'collected'=>'text-info', 'in-transit'=>'text-info', 'on-hold'=>'text-info',
                                         'out-for-delivery'=>'text-info', 'delivered'=>'text-success', 'partially-delivered'=>'text-success',
                                         'returned-warehouse'=>'text-danger', 'returning-origin'=>'text-danger', 'returned'=>'text-danger',
-                                        'partially-returned'=>'text-danger', 'postponed'=>'text-danger'
+                                        'partially-returned'=>'text-danger', 'postponed'=>'text-danger', 'deleted'=>'text-danger'
                                     ])
                                     <span class="{{$status_classes[$order['order_status']] ?? 'text-danger'}} text-capitalize">
                                         {{translate(str_replace('_', ' ', $order['order_status']))}}

@@ -125,17 +125,30 @@ class POSController extends Controller
     public function getCustomers(Request $request): JsonResponse
     {
         $key = explode(' ', $request['q']);
-        $data = DB::table('users')
-            ->where(function ($q) use ($key) {
+        $query = DB::table('users');
+
+        if (!empty($request['q'])) {
+            $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('f_name', 'like', "%{$value}%")
                         ->orWhere('l_name', 'like', "%{$value}%")
                         ->orWhere('phone', 'like', "%{$value}%");
+
+                    // Normalize phone search for Iraq
+                    if (is_numeric($value)) {
+                        $phoneValue = $value;
+                        if (strpos($phoneValue, '0') === 0) {
+                            $phoneValue = substr($phoneValue, 1);
+                        } elseif (strpos($phoneValue, '964') === 0) {
+                            $phoneValue = substr($phoneValue, 3);
+                        }
+                        $q->orWhere('phone', 'like', "%" . $phoneValue . "%");
+                    }
                 }
-            })
-            ->limit(8)
-            ->latest()
-            ->get([DB::raw('id, CONCAT(f_name, " ", l_name, " (", phone ,")") as text')]);
+            });
+        }
+
+        $data = $query->limit(20)->latest()->get([DB::raw('id, CONCAT(f_name, " ", l_name, " (", phone ,")") as text')]);
 
         //        $data[] = (object)['id' => false, 'text' => translate('walk_in_customer')];
 
@@ -198,6 +211,33 @@ class POSController extends Controller
         $cart['extra_discount'] = $request->discount;
         $cart['extra_discount_type'] = $request->type;
         $request->session()->put('cart', $cart);
+        return back();
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse|RedirectResponse
+     */
+    public function updateDeliveryFee(Request $request)
+    {
+        $cart = $request->session()->get('cart', collect([]));
+
+        // Check if free delivery is selected
+        if ($request->has('is_free_delivery') && $request->is_free_delivery == 1) {
+            $cart['is_free_delivery'] = true;
+            $cart['delivery_fee'] = 0;
+        } else {
+            $cart['is_free_delivery'] = false;
+            $cart['delivery_fee'] = $request->filled('fee_customer_payable') ? $request->fee_customer_payable : 0;
+        }
+
+        $request->session()->put('cart', $cart);
+
+        if ($request->ajax()) {
+            return response()->json(['message' => translate('تم تحديث رسوم التوصيل')], 200);
+        }
+
+        Toastr::success(translate('تم تحديث رسوم التوصيل'));
         return back();
     }
 
@@ -343,13 +383,29 @@ class POSController extends Controller
                     ->whereDate('created_at', '<=', $endDate);
             });
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('transaction_reference', 'like', "%{$value}%");
+                        ->orWhere('transaction_reference', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            
+                            // Normalize phone search for Iraq
+                            if (is_numeric($value)) {
+                                $phoneValue = $value;
+                                if (strpos($phoneValue, '0') === 0) {
+                                    $phoneValue = substr($phoneValue, 1);
+                                } elseif (strpos($phoneValue, '964') === 0) {
+                                    $phoneValue = substr($phoneValue, 3);
+                                }
+                                $query->orWhere('phone', 'like', "%" . $phoneValue . "%");
+                            }
+                        });
                 }
             });
             $queryParams = ['search' => $request['search']];
@@ -403,7 +459,7 @@ class POSController extends Controller
         $order->coupon_code = $request->coupon_code ?? null;
         $order->payment_method = $request->type;
         $order->transaction_reference = $request->transaction_reference ?? null;
-        $order->delivery_charge = 0; // since POS, no distance, no delivery charge
+        $order->delivery_charge = $request->filled('fee_customer_payable') ? $request->fee_customer_payable : ($cart['delivery_fee'] ?? 0);
         $order->delivery_address_id = $request->delivery_address_id ?? null;
         $order->order_note = null;
         $order->checked = 1;
@@ -439,76 +495,148 @@ class POSController extends Controller
                     }
                 }
 
-                $discountOnProduct = 0;
-                $productSubTotal = ($c['price']) * $c['quantity'];
-                $discountOnProduct += ($c['discount'] * $c['quantity']);
+            // 4. Process Cart Items
+            $totalUnits = 0;
+            foreach ($cart as $key => $c) {
+                if (is_array($c) && isset($c['id'])) {
+                    $product = $this->product->find($c['id']);
+                    if (!$product) continue;
 
-                // Only check and update stock if product is NOT unlimited
-                if (!$product->is_unlimited) {
-                    if (($product->total_stock - $c['quantity']) < 0 && count($cart) > 1) {
-                        Toastr::error(translate($product->name . ' is out of stock'));
-                        continue;
-                    } else if (($product->total_stock - $c['quantity']) < 0 && count($cart) <= 1) {
-                        Toastr::error(translate($product->name . ' is out of stock'));
-                        return back();
+                    // Only check and update stock if product is NOT unlimited
+                    if (!$product->is_unlimited) {
+                        if (($product->total_stock - $c['quantity']) < 0 && count($cart) > 1) {
+                            Toastr::error(translate($product->name . ' is out of stock'));
+                            continue;
+                        } else if (($product->total_stock - $c['quantity']) < 0 && count($cart) <= 1) {
+                            Toastr::error(translate($product->name . ' is out of stock'));
+                            return back();
+                        }
                     }
-                }
-                $product->total_stock -= $c['quantity'];
-
-                if ($product) {
-                    $price = $c['price'];
-                    $product = Helpers::product_data_formatting($product);
-                    $or_d = [
+                    
+                    $totalUnits += $c['quantity'];
+                    $product_formatted = Helpers::product_data_formatting($product);
+                    
+                    $orderDetails[] = [
                         'product_id' => $c['id'],
-                        'product_details' => $product,
+                        'product_details' => json_encode($product_formatted),
                         'quantity' => $c['quantity'],
-                        'price' => $price,
-                        'tax_amount' => floor(Helpers::tax_calculate($product, $price)),
-                        'discount_on_product' => floor(Helpers::discount_calculate($product, $price)),
+                        'price' => $c['price'],
+                        'tax_amount' => 0, // Calculated below
+                        'discount_on_product' => 0, // Calculated below
                         'discount_type' => 'discount_on_product',
                         'variant' => json_encode($c['variant']),
                         'variation' => json_encode($c['variations']),
                         'is_stock_decreased' => 1,
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
+                        'temp_product_data' => $product_formatted
                     ];
-                    $totalTaxAmount += $or_d['tax_amount'] * $c['quantity'];
-                    $productPrice += $productSubTotal - $discountOnProduct;
-                    $totalProductMainPrice += $productSubTotal;
-                    $orderDetails[] = $or_d;
-                }
 
-                // Update product stock ONLY if product is NOT unlimited
-                $varStore = [];
-                if (!empty($product['variations'])) {
-                    $type = $c['variant'];
-                    foreach ($product['variations'] as $var) {
-                        if ($type == $var['type']) {
-                            $var['stock'] -= $c['quantity'];
+                    $totalProductMainPrice += ($c['price'] * $c['quantity']);
+
+                    // Update product stock ONLY if product is NOT unlimited
+                    $varStore = [];
+                    if (!empty($product['variations'])) {
+                        $type = $c['variant'];
+                        foreach ($product['variations'] as $var) {
+                            if ($type == $var['type']) {
+                                $var['stock'] -= $c['quantity'];
+                            }
+                            $varStore[] = $var;
                         }
-                        $varStore[] = $var;
                     }
-                }
 
-                $this->product->where(['id' => $product['id']])->update([
-                    'variations' => json_encode($varStore),
-                    'total_stock' => $product['total_stock'] - $c['quantity'],
-                ]);
+                    $this->product->where(['id' => $product['id']])->update([
+                        'variations' => json_encode($varStore),
+                        'total_stock' => $product['total_stock'] - $c['quantity'],
+                    ]);
+                }
             }
         }
 
-        $totalPrice = $productPrice;
-
+        // 7. Calculate and Distribute Extra Discount
+        $extraDiscount = 0;
         if (isset($cart['extra_discount'])) {
-            $extraDiscount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0 ? (($totalProductMainPrice * $cart['extra_discount']) / 100) : $cart['extra_discount'];
-            $totalPrice -= $extraDiscount;
+            $extraDiscount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0 
+                ? (($totalProductMainPrice * $cart['extra_discount']) / 100) 
+                : $cart['extra_discount'];
+            $extraDiscount = (int) round($extraDiscount);
         }
 
+        // Distribute discount safely as INTEGERS (Ensuring price >= 1 for Boxy)
+        if ($extraDiscount > 0 && $totalUnits > 0) {
+            $minPrice = 1;
+            $remaining = $extraDiscount;
+
+            while ($remaining > 0) {
+                $activeUnits = 0;
+                foreach ($orderDetails as $item) {
+                    if ($item['price'] > $minPrice) $activeUnits += $item['quantity'];
+                }
+
+                if ($activeUnits == 0) break; // No more headroom anywhere
+
+                $share = floor($remaining / $activeUnits);
+                
+                if ($share > 0) {
+                    // Pass 1: Bulk distribute even shares
+                    foreach ($orderDetails as &$item) {
+                        $canTake = max(0, $item['price'] - $minPrice);
+                        $take = min($share, $canTake);
+                        $item['price'] -= $take;
+                        $remaining -= ($take * $item['quantity']);
+                    }
+                    unset($item);
+                } else {
+                    // Pass 2: Unit-by-unit distribution for remaining fraction (< activeUnits)
+                    $newDetails = [];
+                    foreach ($orderDetails as $item) {
+                        if ($remaining > 0 && ($item['price'] - $minPrice) > 0) {
+                            $takeUnits = min((int)$remaining, $item['quantity']);
+                            if ($takeUnits < $item['quantity']) {
+                                $split = $item;
+                                $split['quantity'] = $takeUnits;
+                                $split['price'] -= 1;
+                                $newDetails[] = $split;
+                                
+                                $item['quantity'] -= $takeUnits;
+                                $newDetails[] = $item;
+                                $remaining -= $takeUnits;
+                            } else {
+                                $item['price'] -= 1;
+                                $newDetails[] = $item;
+                                $remaining -= $item['quantity'];
+                            }
+                        } else {
+                            $newDetails[] = $item;
+                        }
+                    }
+                    $orderDetails = $newDetails;
+                }
+            }
+        }
+
+        // Finalize Item Totals (Tax and Product-level Discount)
+        $totalTaxAmount = 0;
+        $productPrice = 0;
+        foreach ($orderDetails as $key => &$item) {
+            $item['price'] = (int) round($item['price']); // Ensure final price is integer
+            $item['tax_amount'] = floor(Helpers::tax_calculate($item['temp_product_data'], $item['price']));
+            $item['discount_on_product'] = floor(Helpers::discount_calculate($item['temp_product_data'], $item['price']));
+            
+            $totalTaxAmount += $item['tax_amount'] * $item['quantity'];
+            $productPrice += ($item['price'] * $item['quantity']) - ($item['discount_on_product'] * $item['quantity']);
+            
+            $item['product_details'] = json_encode($item['temp_product_data']);
+            unset($item['temp_product_data']);
+        }
+
+        $totalPrice = $productPrice;
         $tax = isset($cart['tax']) ? $cart['tax'] : 0;
         $totalTaxAmount = ($tax > 0) ? (($totalPrice * $tax) / 100) : $totalTaxAmount;
 
         try {
-            $order->extra_discount = $extraDiscount ?? 0;
+            $order->extra_discount = 0; // Discount is embedded in prices
             $order->total_tax_amount = $totalTaxAmount;
             $order->order_amount = $totalPrice + $totalTaxAmount + $order->delivery_charge;
             $order->coupon_discount_amount = 0.00;
@@ -631,13 +759,21 @@ class POSController extends Controller
 
         $queryParams = ['start_date' => $startDate, 'end_date' => $endDate];
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('transaction_reference', 'like', "%{$value}%");
+                        ->orWhere('transaction_reference', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParams = ['search' => $request['search']];

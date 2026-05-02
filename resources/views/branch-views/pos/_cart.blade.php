@@ -87,6 +87,12 @@ if ($extra_discount_type == 'percent' && $extra_discount > 0) {
 if ($extra_discount) {
     $total -= $extra_discount;
 }
+
+$delivery_fee = session()->get('cart')['delivery_fee'] ?? 0;
+$is_free_delivery = session()->get('cart')['is_free_delivery'] ?? false;
+if ($is_free_delivery) {
+    $delivery_fee = 0;
+}
 ?>
 <div class="box p-3">
     <dl class="row">
@@ -109,13 +115,26 @@ if ($extra_discount) {
         <dt class="col-6">{{translate('tax')}} :</dt>
         <dd class="col-6 text-end">{{ Helpers::set_symbol(round($total_tax, 2)) }}</dd>
 
+        <dt class="col-6">{{translate('رسوم التوصيل')}} :
+        </dt>
+        <dd class="col-6 text-end">
+            <button class="btn btn-sm" type="button" data-toggle="modal" data-target="#delivery-fee-modal">
+                <i class="tio-edit"></i>
+            </button>
+            {{ $is_free_delivery ? translate('مجاني') : Helpers::set_symbol($delivery_fee) }}
+        </dd>
+
         <dt class="col-6 font-weight-bold fs-16 border-top pt-2">{{translate('total')}} :</dt>
         <dd class="col-6 text-end font-weight-bold fs-16 border-top pt-2">
-            {{ Helpers::set_symbol(round($total + $total_tax, 2)) }}</dd>
+            {{ Helpers::set_symbol(round($total + $total_tax + $delivery_fee, 0)) }}</dd>
     </dl>
 
     <form action="{{route('branch.pos.order')}}" id='order_place' method="post">
         @csrf
+        {{-- Hidden inputs for delivery --}}
+        <input type="hidden" name="fee_customer_payable" id="delivery_fee_input" value="{{ $delivery_fee }}">
+        <input type="hidden" name="is_free_delivery" id="is_free_delivery_input" value="{{ $is_free_delivery ? 1 : 0 }}">
+
         <div class="my-4 p-3 border rounded bg-light">
             <h5 class="mb-3 text-primary"><i class="tio-info-outined"></i> {{translate('Additional Order Data')}}</h5>
             <div class="row g-2">
@@ -189,9 +208,9 @@ if ($extra_discount) {
                 <input type="number" class="form-control w-50 text-right" name="show_paid_amount" step="0.01"
                     id="showPaidAmount" value="{{ round($total + $total_tax, 2) }}" required="">
                 <input type="hidden" class="hidden-paid-amount" name="paid_amount" id="paidAmount"
-                    value="{{ round($total + $total_tax, 2) }}">
+                    value="{{ round($total + $total_tax + $delivery_fee, 2) }}">
                 <input type="hidden" class="hidden-paid-amount" id="totalAmount"
-                    value="{{ round($total + $total_tax, 2) }}">
+                    value="{{ round($total + $total_tax + $delivery_fee, 2) }}">
             </div>
             <div class="form-group d-flex align-items-center justify-content-between gap-2">
                 <label class="due-or-change-amount w-50 mb-0">{{translate('change_amount')}} :</label>

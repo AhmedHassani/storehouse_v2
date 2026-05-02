@@ -77,13 +77,29 @@ class OrderController extends Controller
 
         $queryParam = ['branch_id' => $branchId, 'start_date' => $startDate, 'end_date' => $endDate];
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('payment_status', 'like', "{$value}%");
+                        ->orWhere('payment_status', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            
+                            // Normalize phone search for Iraq
+                            if (is_numeric($value)) {
+                                $phoneValue = $value;
+                                if (strpos($phoneValue, '0') === 0) {
+                                    $phoneValue = substr($phoneValue, 1);
+                                } elseif (strpos($phoneValue, '964') === 0) {
+                                    $phoneValue = substr($phoneValue, 3);
+                                }
+                                $query->orWhere('phone', 'like', "%" . $phoneValue . "%");
+                            }
+                        });
                 }
             });
             $queryParam = ['search' => $request['search'], 'branch_id' => $request['branch_id'], 'start_date' => $request['start_date'], 'end_date' => $request['end_date']];
@@ -128,6 +144,12 @@ class OrderController extends Controller
         \Log::info("=== STATUS CHANGE REQUEST ===");
         \Log::info("Order ID: " . $request->id . " | New Status: " . $request->order_status . " | Boxy UID: " . ($order->boxy_uid ?? 'NONE'));
         \Log::info("============================");
+
+        // If it's a Boxy order and user cancels, it should go back to 'new' instead of 'canceled'
+        // This allows re-sending or re-scheduling the order.
+        if ($order->boxy_uid && $request->order_status == 'canceled') {
+            $request->merge(['order_status' => 'new']);
+        }
 
         if (in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
             Toastr::warning(translate('you_can_not_change_the_status_of ' . $order->order_status . ' order'));
@@ -461,6 +483,34 @@ class OrderController extends Controller
         return view('admin-views.order.invoice', compact('order'));
     }
 
+    public function bulkGenerateLabels(Request $request)
+    {
+        $orderIds = $request->order_ids;
+        if (empty($orderIds)) {
+            Toastr::warning(translate('No orders selected!'));
+            return back();
+        }
+
+        $orders = $this->order->whereIn('id', $orderIds)->whereNotNull('boxy_uid')->get();
+        if ($orders->isEmpty()) {
+            Toastr::warning(translate('None of the selected orders are linked to Boxy Delivery!'));
+            return back();
+        }
+
+        $boxyUids = $orders->pluck('boxy_uid')->toArray();
+        $pdfContent = $this->boxyService->bulkGetOrderLabels($boxyUids);
+
+        if ($pdfContent) {
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="boxy-labels.pdf"'
+            ]);
+        }
+
+        Toastr::error(translate('Failed to fetch labels from Boxy Delivery.'));
+        return back();
+    }
+
     /**
      * @param Request $request
      * @param $id
@@ -521,13 +571,21 @@ class OrderController extends Controller
                 });
         }
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('payment_status', 'like', "%{$value}%");
+                        ->orWhere('payment_status', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParam = ['search' => $request['search']];
@@ -638,25 +696,31 @@ class OrderController extends Controller
 
         foreach ($orderIds as $id) {
             $order = $this->order->find($id);
+            $targetStatus = $status;
+
+            // If it's a Boxy order and user cancels, it should go back to 'new'
+            if ($order->boxy_uid && $targetStatus == 'canceled') {
+                $targetStatus = 'new';
+            }
 
             // Validation checks (Skip invalid orders)
             if (in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
                 $skippedCount++;
                 continue;
             }
-            if ($status == 'delivered' && $order['payment_status'] != 'paid' && !in_array($order['payment_method'], ['cash_on_delivery', 'wallet'])) {
+            if ($targetStatus == 'delivered' && $order['payment_status'] != 'paid' && !in_array($order['payment_method'], ['cash_on_delivery', 'wallet'])) {
                 $skippedCount++;
                 $failReason = ' (Unpaid)';
                 continue;
             }
-            if (($status == 'out_for_delivery' || $status == 'delivered') && $order['delivery_man_id'] == null && $order['order_type'] != 'self_pickup') {
+            if (($targetStatus == 'out_for_delivery' || $targetStatus == 'delivered') && $order['delivery_man_id'] == null && $order['order_type'] != 'self_pickup') {
                 $skippedCount++;
                 $failReason = ' (No Delivery Man)';
                 continue;
             }
 
             // Stock handling
-            if ($status == 'returned' || $status == 'failed' || $status == 'canceled') {
+            if ($targetStatus == 'returned' || $targetStatus == 'failed' || $targetStatus == 'canceled') {
                 foreach ($order->details as $detail) {
                     if ($detail['is_stock_decreased'] == 1) {
                         $product = $this->product->find($detail['product_id']);
@@ -724,19 +788,20 @@ class OrderController extends Controller
             }
 
 
-            $order->order_status = $status;
+            $order->order_status = $targetStatus;
             DB::beginTransaction();
             $order->save();
-            if ($status == 'delivered') {
+            if ($targetStatus == 'delivered') {
                 if ($order->is_guest != 1) {
                     $this->customerCreditWalletTransactionsForOrderComplete(customer: $order->customer, order: $order);
                 }
             }
             DB::commit();
+            $this->syncWithBoxy($order);
 
             // Notifications
             $customerFcmToken = $order->is_guest == 0 ? ($order->customer ? $order->customer->cm_firebase_token : null) : ($order->guest ? $order->guest->fcm_token : null);
-            $value = Helpers::order_status_update_message($status);
+            $value = Helpers::order_status_update_message($targetStatus);
             try {
                 if ($value && $customerFcmToken) {
                     $data = [
@@ -790,7 +855,7 @@ class OrderController extends Controller
             $response = $this->boxyService->cancelOrder($order->boxy_uid);
 
             if ($response['success']) {
-                $order->order_status = 'canceled';
+                $order->order_status = 'new';
                 $order->save();
                 Toastr::success(translate('Order canceled on Boxy Delivery successfully'));
             } else {
@@ -891,7 +956,7 @@ class OrderController extends Controller
             if ($response['success']) {
                 $order->boxy_uid = null;
                 $order->boxy_platform_code = null;
-                $order->order_status = 'canceled';
+                $order->order_status = 'deleted';
                 $order->save();
                 Toastr::success(translate('Order deleted from Boxy Delivery successfully'));
             } else {

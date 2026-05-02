@@ -184,6 +184,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::post('delete-boxy/{id}', [OrderController::class, 'deleteBoxyOrder'])->name('delete-boxy');
             Route::post('ready-to-pickup/{id}', [OrderController::class, 'setBoxyReadyToPickup'])->name('ready-to-pickup');
             Route::post('bulk-ready-to-pickup', [OrderController::class, 'bulkReadyToPickup'])->name('bulk-ready-to-pickup');
+            Route::post('bulk-labels', [OrderController::class, 'bulkGenerateLabels'])->name('bulk-labels');
             Route::delete('delete-item/{id}', [OrderController::class, 'deleteItem'])->name('delete-item');
             Route::post('update-item/{id}', [OrderController::class, 'updateItem'])->name('update-item');
         });
@@ -417,6 +418,7 @@ Route::group(['namespace' => 'Admin', 'as' => 'admin.'], function () {
             Route::get('create', [PurchaseController::class, 'create'])->name('create')->middleware('permission:purchase.add');
             Route::post('store', [PurchaseController::class, 'store'])->name('store')->middleware('permission:purchase.add');
             Route::get('invoice/{id}', [PurchaseController::class, 'invoice'])->name('invoice')->middleware('permission:purchase.view');
+            Route::get('print/{id}', [PurchaseController::class, 'print'])->name('print')->middleware('permission:purchase.view');
             Route::delete('delete/{id}', [PurchaseController::class, 'delete'])->name('delete')->middleware('permission:purchase.delete');
             Route::get('edit/{id}', [PurchaseController::class, 'edit'])->name('edit')->middleware('permission:purchase.edit');
             Route::post('update/{id}', [PurchaseController::class, 'update'])->name('update')->middleware('permission:purchase.edit');

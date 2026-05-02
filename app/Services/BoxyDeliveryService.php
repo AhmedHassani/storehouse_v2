@@ -229,9 +229,26 @@ class BoxyDeliveryService
      */
     public function getOrderLabel(string $uid)
     {
+        return $this->bulkGetOrderLabels([$uid]);
+    }
+
+    /**
+     * Fetch multiple order pick-up labels (PDF) from Boxy
+     *
+     * @param array $uids
+     * @return mixed
+     */
+    public function bulkGetOrderLabels(array $uids)
+    {
+        if (empty($uids)) return null;
+
         try {
-            $url = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/pick-up-labels?order_uid[]={$uid}";
+            // Join UIDs using standard array format: order_uid[]=UID1&order_uid[]=UID2
+            $queryString = implode('&', array_map(fn($uid) => 'order_uid[]=' . urlencode($uid), $uids));
+            $url = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/pick-up-labels?{$queryString}";
             
+            Log::info("Fetching Boxy Labels: " . $url);
+
             $response = Http::withHeaders([
                 'api-key' => $this->apiKey,
                 'api-secret' => $this->apiSecret,
@@ -241,10 +258,10 @@ class BoxyDeliveryService
                 return $response->body(); // Binary PDF
             }
             
-            Log::error("Boxy Label Error: " . $response->body());
+            Log::error("Boxy Bulk Label Error: " . $response->body());
             return null;
         } catch (\Exception $e) {
-            Log::error("Boxy Label Exception: " . $e->getMessage());
+            Log::error("Boxy Bulk Label Exception: " . $e->getMessage());
             return null;
         }
     }
@@ -314,8 +331,17 @@ class BoxyDeliveryService
             $productDetails = json_decode($detail->product_details, true);
             $products[] = [
                 "title" => $productDetails['name'] ?? 'Product',
-                "price" => (int) $detail->price,
+                "price" => (int) round($detail->price),
                 "quantity" => (int) $detail->quantity
+            ];
+        }
+
+        // Add Delivery Charge as a product if exists
+        if ($order->delivery_charge > 0) {
+            $products[] = [
+                "title" => "كلفه التوصيل",
+                "price" => (int) round($order->delivery_charge),
+                "quantity" => 1
             ];
         }
 

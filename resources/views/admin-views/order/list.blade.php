@@ -66,8 +66,8 @@
                         <form action="{{url()->current()}}" method="GET">
                             <div class="input-group">
                                 <input id="datatableSearch_" type="search" name="search" class="form-control"
-                                    placeholder="{{translate('Search by order ID')}}" aria-label="Search"
-                                    value="{{$search}}" required autocomplete="off">
+                                    placeholder="{{translate('Search by ID, Phone, or Name')}}" aria-label="Search"
+                                    value="{{$search}}" autocomplete="off">
                                 <div class="input-group-append">
                                     <button type="submit" class="btn btn-primary">{{translate('search')}}
                                     </button>
@@ -79,8 +79,11 @@
                         @if(auth('admin')->user()->id == 1 || auth('admin')->user()->hasPermission('order.edit'))
                         <button type="button" id="btn-ready-to-pickup" class="btn btn-success mr-2" disabled onclick="submitBulkReadyToPickup()">
                             <i class="tio-checkmark-circle"></i> {{ translate('Ready to Pick Up') }}
-                            <span id="selected-count" class="badge badge-light ml-1" style="display:none;">0</span>
                         </button>
+                        <button type="button" id="btn-print-labels" class="btn btn-primary" disabled onclick="submitBulkPrintLabels()">
+                            <i class="tio-print"></i> {{ translate('Print Labels') }}
+                        </button>
+                        <span id="selected-count" class="badge badge-light ml-1" style="display:none;">0</span>
                         @endif
                         <div>
                             <button type="button" class="btn btn-outline-primary" data-toggle="dropdown"
@@ -134,7 +137,7 @@
                                 <td>
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input order-checkbox" name="order_ids[]" value="{{$order['id']}}"
-                                            id="order-{{$order['id']}}" {{ $order['order_status'] != 'new' ? 'disabled' : '' }}>
+                                            id="order-{{$order['id']}}" {{ ($order['order_status'] != 'new' && !$order->boxy_uid) ? 'disabled' : '' }}>
                                         <label class="custom-control-label" for="order-{{$order['id']}}"></label>
                                     </div>
                                 </td>
@@ -244,13 +247,17 @@
     <script>
         function updateReadyBtn() {
             var count = $('.order-checkbox:checked').length;
-            var $btn = $('#btn-ready-to-pickup');
+            var $btnReady = $('#btn-ready-to-pickup');
+            var $btnPrint = $('#btn-print-labels');
             var $count = $('#selected-count');
+            
             if (count > 0) {
-                $btn.prop('disabled', false);
+                $btnReady.prop('disabled', false);
+                $btnPrint.prop('disabled', false);
                 $count.text(count).show();
             } else {
-                $btn.prop('disabled', true);
+                $btnReady.prop('disabled', true);
+                $btnPrint.prop('disabled', true);
                 $count.hide();
             }
         }
@@ -312,6 +319,39 @@
                     form.submit();
                 }
             });
+        }
+
+        function submitBulkPrintLabels() {
+            var $checked = $('.order-checkbox:checked');
+            var count = $checked.length;
+            if (count === 0) return;
+
+            var ids = [];
+            $checked.each(function () {
+                ids.push($(this).val());
+            });
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.orders.bulk-labels") }}';
+            form.style.display = 'none';
+
+            var csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+
+            for (var i = 0; i < ids.length; i++) {
+                var idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'order_ids[]';
+                idInput.value = ids[i];
+                form.appendChild(idInput);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 @endpush

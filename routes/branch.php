@@ -37,6 +37,7 @@ Route::group(['namespace' => 'Branch', 'as' => 'branch.', 'middleware' => 'maint
             Route::post('empty-cart', [POSController::class, 'emptyCart'])->name('emptyCart');
             Route::post('tax', [POSController::class, 'updateTax'])->name('tax');
             Route::post('discount', [POSController::class, 'updateDiscount'])->name('discount');
+            Route::post('delivery-fee', [POSController::class, 'updateDeliveryFee'])->name('delivery-fee');
             Route::get('customers', [POSController::class, 'getCustomers'])->name('customers');
             Route::post('order', [POSController::class, 'placeOrder'])->name('order');
             Route::get('orders', [POSController::class, 'orderList'])->name('orders');

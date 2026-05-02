@@ -2,6 +2,8 @@
 
 @section('title', translate('قائمة المشتريات'))
 
+
+
 @section('content')
     <div class="content container-fluid">
         <!-- Page Header -->
@@ -113,6 +115,12 @@
                                                     href="{{route('admin.purchase.invoice', [$purchase['id']])}}"
                                                     title="{{translate('عرض الفاتورة')}}">
                                                     <i class="tio-invisible"></i>
+                                                </a>
+                                                <a class="btn btn-outline-success square-btn btn-sm"
+                                                    href="{{route('admin.purchase.print', [$purchase['id']])}}"
+                                                    target="_blank"
+                                                    title="{{translate('طباعة')}}">
+                                                    <i class="tio-print"></i>
                                                 </a>
                                                 <a class="btn btn-outline-primary square-btn btn-sm"
                                                     href="{{route('admin.purchase.edit', [$purchase['id']])}}"

@@ -137,16 +137,31 @@ class POSController extends Controller
     public function getCustomers(Request $request): JsonResponse
     {
         $key = explode(' ', $request['q']);
-        $data = DB::table('users')
-            ->where(function ($q) use ($key) {
+        $query = DB::table('users');
+
+        if (!empty($request['q'])) {
+            $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('f_name', 'like', "%{$value}%")
                         ->orWhere('l_name', 'like', "%{$value}%")
                         ->orWhere('phone', 'like', "%{$value}%");
+
+                    // Normalize phone search for Iraq
+                    if (is_numeric($value)) {
+                        $phoneValue = $value;
+                        if (strpos($phoneValue, '0') === 0) {
+                            $phoneValue = substr($phoneValue, 1);
+                        } elseif (strpos($phoneValue, '964') === 0) {
+                            $phoneValue = substr($phoneValue, 3);
+                        }
+                        $q->orWhere('phone', 'like', "%" . $phoneValue . "%");
+                    }
                 }
-            })
-            ->whereNotNull(['f_name', 'l_name', 'phone'])
-            ->limit(8)
+            });
+        }
+
+        $data = $query->whereNotNull(['f_name', 'l_name', 'phone'])
+            ->limit(20) // Increased limit for better visibility
             ->latest()
             ->get([DB::raw('id, CONCAT(f_name, " ", l_name, " (", phone ,")") as text')]);
 
@@ -428,13 +443,21 @@ class POSController extends Controller
             });
         $queryParam = ['branch_id' => $branchId, 'start_date' => $startDate, 'end_date' => $endDate];
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('transaction_reference', 'like', "%{$value}%");
+                        ->orWhere('transaction_reference', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParam = ['search' => $request['search']];
@@ -532,13 +555,13 @@ class POSController extends Controller
             }
 
             // 4. Process Cart Items
+            $totalUnits = 0;
             foreach ($cart as $key => $c) {
                 if (is_array($c) && isset($c['id'])) {
+                    $totalUnits += $c['quantity'];
+                    
                     $product = $this->product->find($c['id']);
                     if (!$product) continue;
-
-                    $productSubtotal = ($c['price']) * $c['quantity'];
-                    $discountOnProduct = ($c['discount'] * $c['quantity']);
 
                     $product_data = Helpers::product_data_formatting($product);
                     $order_details[] = [
@@ -547,20 +570,19 @@ class POSController extends Controller
                         'product_details' => json_encode($product_data),
                         'quantity' => $c['quantity'],
                         'price' => $c['price'],
-                        'tax_amount' => floor(Helpers::tax_calculate($product_data, $c['price'])),
-                        'discount_on_product' => floor(Helpers::discount_calculate($product_data, $c['price'])),
+                        'tax_amount' => 0, // Calculated below
+                        'discount_on_product' => 0, // Calculated below
                         'discount_type' => 'discount_on_product',
                         'variant' => json_encode($c['variant']),
                         'variation' => json_encode($c['variations']),
                         'unit' => $product_data['unit'] ?? 'pc',
                         'is_stock_decreased' => 1,
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
+                        'temp_product_data' => $product_data // Temporary for tax/discount calc
                     ];
 
-                    $totalTaxAmount += $order_details[count($order_details) - 1]['tax_amount'] * $c['quantity'];
-                    $productPrice += $productSubtotal - $discountOnProduct;
-                    $totalProductMainPrice += $productSubtotal;
+                    $totalProductMainPrice += ($c['price'] * $c['quantity']);
 
                     // 5. Update Stock
                     $var_store = [];
@@ -580,6 +602,82 @@ class POSController extends Controller
                 }
             }
 
+            // 7. Calculate and Distribute Extra Discount
+            $extra_discount = 0;
+            if (isset($cart['extra_discount'])) {
+                $extra_discount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0
+                    ? (($totalProductMainPrice * $cart['extra_discount']) / 100)
+                    : $cart['extra_discount'];
+                $extra_discount = (int) round($extra_discount);
+            }
+
+            // Distribute discount safely as INTEGERS (Ensuring price >= 1 for Boxy)
+            if ($extra_discount > 0 && $totalUnits > 0) {
+                $minPrice = 1;
+                $remaining = $extra_discount;
+
+                while ($remaining > 0) {
+                    $activeUnits = 0;
+                    foreach ($order_details as $item) {
+                        if ($item['price'] > $minPrice) $activeUnits += $item['quantity'];
+                    }
+
+                    if ($activeUnits == 0) break; // No more headroom anywhere
+
+                    $share = floor($remaining / $activeUnits);
+                    
+                    if ($share > 0) {
+                        // Pass 1: Bulk distribute even shares
+                        foreach ($order_details as &$item) {
+                            $canTake = max(0, $item['price'] - $minPrice);
+                            $take = min($share, $canTake);
+                            $item['price'] -= $take;
+                            $remaining -= ($take * $item['quantity']);
+                        }
+                        unset($item);
+                    } else {
+                        // Pass 2: Unit-by-unit distribution for remaining fraction (< activeUnits)
+                        $new_details = [];
+                        foreach ($order_details as $item) {
+                            if ($remaining > 0 && ($item['price'] - $minPrice) > 0) {
+                                $takeUnits = min((int)$remaining, $item['quantity']);
+                                if ($takeUnits < $item['quantity']) {
+                                    $split = $item;
+                                    $split['quantity'] = $takeUnits;
+                                    $split['price'] -= 1;
+                                    $new_details[] = $split;
+                                    
+                                    $item['quantity'] -= $takeUnits;
+                                    $new_details[] = $item;
+                                    $remaining -= $takeUnits;
+                                } else {
+                                    $item['price'] -= 1;
+                                    $new_details[] = $item;
+                                    $remaining -= $item['quantity'];
+                                }
+                            } else {
+                                $new_details[] = $item;
+                            }
+                        }
+                        $order_details = $new_details;
+                    }
+                }
+            }
+
+            // Finalize Item Totals (Tax and Product-level Discount)
+            $totalTaxAmount = 0;
+            $productPrice = 0;
+            foreach ($order_details as $key => &$item) {
+                $item['price'] = (int) round($item['price']); // Ensure final price is integer
+                $item['tax_amount'] = floor(Helpers::tax_calculate($item['temp_product_data'], $item['price']));
+                $item['discount_on_product'] = floor(Helpers::discount_calculate($item['temp_product_data'], $item['price']));
+                
+                $totalTaxAmount += $item['tax_amount'] * $item['quantity'];
+                $productPrice += ($item['price'] * $item['quantity']) - ($item['discount_on_product'] * $item['quantity']);
+                
+                unset($item['temp_product_data']); // Cleanup
+            }
+
             // 6. Bulk Insert Order Details
             if (count($order_details) > 0) {
                 try {
@@ -593,20 +691,13 @@ class POSController extends Controller
                 throw new \Exception('No valid items in cart to create order');
             }
 
-            // 7. Calculate Final Amounts
-            $extra_discount = 0;
-            if (isset($cart['extra_discount'])) {
-                $extra_discount = $cart['extra_discount_type'] == 'percent' && $cart['extra_discount'] > 0
-                    ? (($totalProductMainPrice * $cart['extra_discount']) / 100)
-                    : $cart['extra_discount'];
-            }
-
             $tax = $cart['tax'] ?? 0;
+            // Recalculate total tax if it was a flat cart tax
             $totalTaxAmount = ($tax > 0) ? (($productPrice * $tax) / 100) : $totalTaxAmount;
 
-            $order->extra_discount = $extra_discount;
+            $order->extra_discount = 0; // Discount is now embedded in product prices
             $order->total_tax_amount = $totalTaxAmount;
-            $order_amount = $productPrice + $totalTaxAmount + $order->delivery_charge - $extra_discount;
+            $order_amount = $productPrice + $totalTaxAmount + $order->delivery_charge;
             $order->order_amount = $order_amount;
 
             // 8. Payment Status
@@ -807,7 +898,15 @@ class POSController extends Controller
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('transaction_reference', 'like', "%{$value}%");
+                        ->orWhere('transaction_reference', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParam = ['search' => $request['search']];

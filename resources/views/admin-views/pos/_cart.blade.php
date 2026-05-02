@@ -114,9 +114,9 @@ if ($is_free_delivery) {
         </dd>
 
 
-        <dt class="col-6 d-none">{{translate('رسوم التوصيل')}} :
+        <dt class="col-6">{{translate('رسوم التوصيل')}} :
         </dt>
-        <dd class="col-6 text-right d-none">
+        <dd class="col-6 text-right">
             <button class="btn btn-sm" type="button" data-toggle="modal" data-target="#delivery-fee-modal">
                 <i class="tio-edit"></i>
             </button>
@@ -125,7 +125,7 @@ if ($is_free_delivery) {
 
         <dt class="col-6 font-weight-bold fs-16 border-top pt-2">{{translate('الإجمالي')}} :</dt>
         <dd class="col-6 text-right font-weight-bold fs-16 border-top pt-2">
-            {{ Helpers::set_symbol(round($total + $total_tax + $delivery_fee, 2)) }}
+            {{ Helpers::set_symbol(round($total + $total_tax + $delivery_fee, 0)) }}
         </dd>
     </dl>
 

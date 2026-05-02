@@ -167,6 +167,7 @@
 
 @include('branch-views.modal.print-invoice-modal')
 
+@include('branch-views.pos._delivery_fee_modal')
 @endsection
 
 @push('script_2')

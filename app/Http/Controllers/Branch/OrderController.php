@@ -63,13 +63,21 @@ class OrderController extends Controller
 
         $queryParam = ['start_date' => $startDate, 'end_date' => $endDate];
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('payment_status', 'like', "%{$value}%");
+                        ->orWhere('payment_status', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParam = ['search' => $request['search']];
@@ -91,7 +99,15 @@ class OrderController extends Controller
             foreach ($key as $value) {
                 $q->orWhere('id', 'like', "%{$value}%")
                     ->orWhere('order_status', 'like', "%{$value}%")
-                    ->orWhere('transaction_reference', 'like', "%{$value}%");
+                    ->orWhere('transaction_reference', 'like', "%{$value}%")
+                    ->orWhereHas('customer', function ($query) use ($value) {
+                        $query->where('f_name', 'like', "%{$value}%")
+                            ->orWhere('l_name', 'like', "%{$value}%")
+                            ->orWhere('phone', 'like', "%{$value}%");
+                        if (is_numeric($value) && strpos($value, '0') === 0) {
+                            $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                        }
+                    });
             }
         })->get();
         return response()->json([
@@ -121,6 +137,11 @@ class OrderController extends Controller
     public function status(Request $request): RedirectResponse
     {
         $order = $this->order->where(['id' => $request->id, 'branch_id' => auth('branch')->id()])->first();
+
+        // If it's a Boxy order and user cancels, it should go back to 'new' instead of 'canceled'
+        if ($order->boxy_uid && $request->order_status == 'canceled') {
+            $request->merge(['order_status' => 'new']);
+        }
 
         if (in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
             Toastr::warning(translate('you_can_not_change_the_status_of ' . $order->order_status . ' order'));
@@ -405,13 +426,21 @@ class OrderController extends Controller
                 });
         }
 
-        if ($request->has('search')) {
+        if ($request->has('search') && !empty($request->search)) {
             $key = explode(' ', $request['search']);
             $query = $query->where(function ($q) use ($key) {
                 foreach ($key as $value) {
                     $q->orWhere('id', 'like', "%{$value}%")
                         ->orWhere('order_status', 'like', "%{$value}%")
-                        ->orWhere('payment_status', 'like', "%{$value}%");
+                        ->orWhere('payment_status', 'like', "%{$value}%")
+                        ->orWhereHas('customer', function ($query) use ($value) {
+                            $query->where('f_name', 'like', "%{$value}%")
+                                ->orWhere('l_name', 'like', "%{$value}%")
+                                ->orWhere('phone', 'like', "%{$value}%");
+                            if (is_numeric($value) && strpos($value, '0') === 0) {
+                                $query->orWhere('phone', 'like', "%" . substr($value, 1) . "%");
+                            }
+                        });
                 }
             });
             $queryParams = ['search' => $request['search']];

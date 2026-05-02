@@ -48,8 +48,8 @@
                             <div class="input-group">
                                 <input id="datatableSearch_" type="search" name="search"
                                        class="form-control"
-                                       placeholder="{{translate('Search by order ID')}}" aria-label="Search"
-                                       value="{{$search}}" required autocomplete="off">
+                                       placeholder="{{translate('Search by ID, Phone, or Name')}}" aria-label="Search"
+                                       value="{{$search}}" autocomplete="off">
                                 <div class="input-group-append">
                                     <button type="submit" class="btn btn-primary">{{translate('search')}}
                                     </button>
