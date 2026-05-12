@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class BoxyDeliveryService
 {
-    private $baseUrl = 'https://api-stg.tryboxy.dev/api/v1/merchants/orders/request';
-    private $apiKey = '01KPRA7HNJVNSC0MDK1V5RRTK1';
-    private $apiSecret = 'M@AInv7*_6=#hzWwbQ&jIUC=vkAwqdhMEx#wlFZdLWv4bRxG64ig4LoEd@Aw-DSo&bY$Rztoh+M00ShRq?-VUOu^fhqFGCBSTV%G7sEAPWY^OSBWl?mC2VD%w7a07elWyeBPQKF&rGNBBR#75fksgkt2wlu?b6gS^Q+1Jm7TaO%7FxZHaxAC0Qfzn%wozX2oZOAHbS_poL@nV*e_OuTPPAHg=mTvW=6&oGIK4zmMrny5s&@SfXBNsHQtMT&t9hk';
+    private $baseUrl = 'https://api.tryboxy.com/api/v1/merchants/orders/request';
+    private $apiKey = '01KRB7WM40ZX4QVTER12MJNJ8S';
+    private $apiSecret = 'eXww_m3R87rKYo8a4bBteOoP3#R%T8hzr_5rPv*hU$xtHMmNSYz1d8A&!eEUk%#8eNkqcvUr^-@yD$-mc!&mucUqSiMABt#rtYtIi6oiVu%NwBdQrqE4-8B$SgIzxfOXJbs7VJphft$g0UX1V+^tn*jj%?H_DasIqkaNiKt-JKaFiUV2ypa_s=XvT4NY#^L15q=F=WiFV+U^VC+j_+!h+LL3W$mD4B%1aFeO!ZOnmGC0$2nt!8EBJ%m+Mxmsyd4';
 
     /**
      * Send order to Boxy Delivery API
@@ -85,7 +85,7 @@ class BoxyDeliveryService
             }
 
             // Based on latest curl example, update uses the order uid in the path
-            $updateUrl = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/{$order->boxy_uid}";
+            $updateUrl = "https://api.tryboxy.com/api/v1/merchants/orders/{$order->boxy_uid}";
             
 
             Log::info("========== UPDATING ORDER IN BOXY ==========");
@@ -140,7 +140,7 @@ class BoxyDeliveryService
         }
 
         try {
-            $url = "https://api-stg.tryboxy.dev/api/v1/merchants/pick-ups/bulk-request?filter_uids[]={$order->boxy_uid}";
+            $url = "https://api.tryboxy.com/api/v1/merchants/pick-ups/bulk-request?filter_uids[]={$order->boxy_uid}";
 
             Log::info("===== BOXY BULK PICK-UP REQUEST =====");
             Log::info("URL: " . $url);
@@ -188,7 +188,7 @@ class BoxyDeliveryService
 
         try {
             $queryString = implode('&', array_map(fn($uid) => 'filter_uids[]=' . urlencode($uid), $boxyUids));
-            $url = "https://api-stg.tryboxy.dev/api/v1/merchants/pick-ups/bulk-request?{$queryString}";
+            $url = "https://api.tryboxy.com/api/v1/merchants/pick-ups/bulk-request?{$queryString}";
 
             Log::info("===== BOXY BULK PICK-UP (MULTIPLE) =====");
             Log::info("URL: " . $url);
@@ -245,7 +245,7 @@ class BoxyDeliveryService
         try {
             // Join UIDs using standard array format: order_uid[]=UID1&order_uid[]=UID2
             $queryString = implode('&', array_map(fn($uid) => 'order_uid[]=' . urlencode($uid), $uids));
-            $url = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/pick-up-labels?{$queryString}";
+            $url = "https://api.tryboxy.com/api/v1/merchants/orders/pick-up-labels?{$queryString}";
             
             Log::info("Fetching Boxy Labels: " . $url);
 
@@ -357,7 +357,7 @@ class BoxyDeliveryService
             "description" => $order->order_note ?? "طلب من النظام",
             "custom_id" => null,
             "products" => $products,
-            "saved_pick_up_address_uid" => "01KPRAQRXY335JNKR6K7YZTHGZ", 
+            "saved_pick_up_address_uid" => "01KREAZG2XS38ES5P5TBWS9NCS", 
             "size" => "M",
             "contact" => [
                 "full_name" => (string) $contactName,
@@ -446,7 +446,7 @@ class BoxyDeliveryService
     public function deleteOrder(string $uid)
     {
         try {
-            $deleteUrl = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/{$uid}";
+            $deleteUrl = "https://api.tryboxy.com/api/v1/merchants/orders/{$uid}";
 
             Log::info("========== DELETING BOXY ORDER =========");
             Log::info("UID: " . $uid);
@@ -482,7 +482,7 @@ class BoxyDeliveryService
     public function cancelOrder(string $uid)
     {
         try {
-            $cancelUrl = "https://api-stg.tryboxy.dev/api/v1/merchants/orders/{$uid}/cancel";
+            $cancelUrl = "https://api.tryboxy.com/api/v1/merchants/orders/{$uid}/cancel";
 
             Log::info("========== CANCELING BOXY ORDER =========");
             Log::info("UID: " . $uid);
