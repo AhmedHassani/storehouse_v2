@@ -22,11 +22,11 @@ class BoxyWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        // 1. Log to Database for tracking
+        // 1. Log to Database for tracking (Simple logging as requested)
         try {
             \App\Models\BoxyWebhookLog::create([
-                'boxy_uid'   => $request->input('uid') ?? $request->input('order_uid'),
-                'event_type' => $request->input('status') ?? $request->input('event'),
+                'boxy_uid'   => $request->input('platform_code') ?? $request->input('uid') ?? $request->input('order_uid') ?? 'Unknown',
+                'event_type' => $request->input('event') ?? $request->input('status') ?? 'Unknown',
                 'payload'    => $request->all(),
                 'headers'    => $request->headers->all(),
                 'ip_address' => $request->ip()
@@ -35,58 +35,21 @@ class BoxyWebhookController extends Controller
             Log::error('Boxy Webhook Logging Failed: ' . $e->getMessage());
         }
 
-        // 2. Security Check (Optional but recommended)
-        $secureKey = env('BOXY_WEBHOOK_SIGNATURE');
-        $providedKey = $request->header('X-Security-Key');
-
-        if (empty($providedKey) || !hash_equals((string)$secureKey, (string)$providedKey)) {
-            Log::channel('boxy_webhook')->warning('Boxy Webhook: Unauthorized attempt (Invalid Security Key)', [
-                'ip' => $request->ip()
-            ]);
-            // Still return 200/success to avoid Boxy retrying if you want, but 401 is more correct.
-            // For now, let's keep it 200 so logs are collected even if key is wrong during setup.
-        }
-
-        // 3. Extract Data for Logging to File (Audit)
-        $uid = $request->input('uid') ?? $request->input('order_uid');
-        $boxyStatus = strtolower($request->input('status', 'unknown'));
+        // 2. Extract Data for Logging to File (Audit)
+        $uid = $request->input('platform_code') ?? $request->input('uid') ?? $request->input('order_uid');
+        $event = $request->input('event') ?? $request->input('status', 'unknown');
         
-        Log::channel('boxy_webhook')->info('Boxy Webhook: Request received and logged to DB', [
+        Log::channel('boxy_webhook')->info('Boxy Webhook Received', [
             'uid' => $uid,
-            'status' => $boxyStatus,
+            'event' => $event,
             'payload' => $request->all()
         ]);
 
-        /* 
-         * -------------------------------------------------------------------------
-         * NOTE: Active processing is currently disabled as requested.
-         * The code below is commented out and will be re-enabled once 
-         * the user is ready to handle specific actions.
-         * -------------------------------------------------------------------------
-         */
-
-        /*
-        $order = Order::where('boxy_uid', $uid)->first();
-        if ($order) {
-            DB::beginTransaction();
-            try {
-                $failedStatuses = ['canceled', 'rejected', 'wrong_address', 'returned', 'no_answer'];
-                if (in_array($boxyStatus, $failedStatuses)) {
-                    $this->restoreStock($order);
-                }
-                $order->order_status = $boxyStatus;
-                if ($boxyStatus === 'delivered') {
-                    $order->payment_status = 'paid';
-                }
-                $order->save();
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-            }
-        }
-        */
-
-        return response()->json(['success' => true, 'message' => 'Webhook received and logged']);
+        return response()->json([
+            'success' => true, 
+            'message' => 'Webhook received and logged',
+            'timestamp' => now()->toDateTimeString()
+        ]);
     }
 
     /**
