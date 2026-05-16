@@ -45,6 +45,37 @@ class BoxyWebhookController extends Controller
             'payload' => $request->all()
         ]);
 
+        if ($request->input('type') === 'self') {
+            $order_id = $request->input('order_id');
+            $incoming_status = $request->input('status');
+
+            // Map incoming Boxy status to system status
+            $status_map = [
+                'out_for_delivery'   => 'out_for_delivery',
+                'delivered'          => 'delivered',
+                'returned'           => 'returned',
+                'partially_returned' => 'returned', // Closest match
+                'not_received'       => 'failed',   // Closest match
+                'postponed'          => 'pending'   // Closest match
+            ];
+
+            if ($order_id && $incoming_status && isset($status_map[$incoming_status])) {
+                $mapped_status = $status_map[$incoming_status];
+
+                $order = Order::find($order_id);
+                // Do not update if order is already in a terminal state
+                if ($order && !in_array($order->order_status, ['returned', 'failed', 'canceled'])) {
+                    $order->order_status = $mapped_status;
+                    $order->save();
+
+                    // Restore stock if the new status implies order wasn't successfully fulfilled
+                    if (in_array($mapped_status, ['returned', 'failed', 'canceled'])) {
+                        $this->restoreStock($order);
+                    }
+                }
+            }
+        }
+
         return response()->json([
             'success' => true, 
             'message' => 'Webhook received and logged',
