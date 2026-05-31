@@ -249,6 +249,39 @@
                                         </span>
                                     </a>
                                 </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/canceled') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['canceled'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('canceled')}}
+                                            <span class="badge badge-soft-danger badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'canceled'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/failed') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['failed'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('failed')}}
+                                            <span class="badge badge-soft-danger badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'failed'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li class="nav-item {{Request::is('admin/orders/list/deleted') ? 'active' : ''}}">
+                                    <a class="nav-link " href="{{route('admin.orders.list', ['deleted'])}}" title="">
+                                        <span class="tio-circle nav-indicator-icon"></span>
+                                        <span class="text-truncate">
+                                            {{translate('deleted')}}
+                                            <span class="badge badge-soft-danger badge-pill ml-1">
+                                                {{\App\Models\Order::notPos()->where(['order_status' => 'deleted'])->count()}}
+                                            </span>
+                                        </span>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                         @endif

@@ -339,11 +339,35 @@
                         <div class="mt-2">
                             @if($order['order_type'] != 'pos')
                                 <h6>{{translate('Order Status')}}</h6>
-                                <div class="form-control d-flex align-items-center" style="background:#f8f9fa; cursor:default; min-height:38px;">
-                                    <span class="badge badge-soft-{{ in_array($order['order_status'], ['delivered','scheduled','collected']) ? 'success' : (in_array($order['order_status'], ['canceled','returned','failed']) ? 'danger' : 'warning') }} px-3 py-2" style="font-size:13px;">
-                                        {{ translate(str_replace(['-','_'], ' ', $order['order_status'])) }}
-                                    </span>
-                                </div>
+                                @if($order['boxy_uid'])
+                                    <div class="form-control d-flex align-items-center" style="background:#f8f9fa; cursor:default; min-height:38px;">
+                                        <span class="badge badge-soft-{{ in_array($order['order_status'], ['delivered','scheduled','collected']) ? 'success' : (in_array($order['order_status'], ['canceled','returned','failed']) ? 'danger' : 'warning') }} px-3 py-2" style="font-size:13px;">
+                                            {{ translate(str_replace(['-','_'], ' ', $order['order_status'])) }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <select name="order_status"
+                                        onchange="route_alert('{{route('admin.orders.status', ['id' => $order['id']])}}'+'&order_status='+ this.value,'{{translate("Change status to ")}}' + this.value)"
+                                        class="form-control text-capitalize">
+                                        <option value="new" {{$order['order_status'] == 'new' ? 'selected' : ''}}>{{translate('new')}}</option>
+                                        <option value="scheduled" {{$order['order_status'] == 'scheduled' ? 'selected' : ''}}>{{translate('scheduled')}}</option>
+                                        <option value="collecting" {{$order['order_status'] == 'collecting' ? 'selected' : ''}}>{{translate('collecting')}}</option>
+                                        <option value="collected" {{$order['order_status'] == 'collected' ? 'selected' : ''}}>{{translate('collected')}}</option>
+                                        <option value="in-transit" {{$order['order_status'] == 'in-transit' ? 'selected' : ''}}>{{translate('in-transit')}}</option>
+                                        <option value="on-hold" {{$order['order_status'] == 'on-hold' ? 'selected' : ''}}>{{translate('on-hold')}}</option>
+                                        <option value="out_for_delivery" {{$order['order_status'] == 'out_for_delivery' ? 'selected' : ''}}>{{translate('out_for_delivery')}}</option>
+                                        <option value="delivered" {{$order['order_status'] == 'delivered' ? 'selected' : ''}}>{{translate('delivered')}}</option>
+                                        <option value="partially-delivered" {{$order['order_status'] == 'partially-delivered' ? 'selected' : ''}}>{{translate('partially-delivered')}}</option>
+                                        <option value="returned-warehouse" {{$order['order_status'] == 'returned-warehouse' ? 'selected' : ''}}>{{translate('returned-warehouse')}}</option>
+                                        <option value="returning-origin" {{$order['order_status'] == 'returning-origin' ? 'selected' : ''}}>{{translate('returning-origin')}}</option>
+                                        <option value="returned" {{$order['order_status'] == 'returned' ? 'selected' : ''}}>{{translate('returned')}}</option>
+                                        <option value="partially-returned" {{$order['order_status'] == 'partially-returned' ? 'selected' : ''}}>{{translate('partially-returned')}}</option>
+                                        <option value="postponed" {{$order['order_status'] == 'postponed' ? 'selected' : ''}}>{{translate('postponed')}}</option>
+                                        <option value="canceled" {{$order['order_status'] == 'canceled' ? 'selected' : ''}}>{{translate('canceled')}}</option>
+                                        <option value="failed" {{$order['order_status'] == 'failed' ? 'selected' : ''}}>{{translate('failed')}}</option>
+                                        <option value="deleted" {{$order['order_status'] == 'deleted' ? 'selected' : ''}}>{{translate('deleted')}}</option>
+                                    </select>
+                                @endif
                             @endif
                         </div>
                         <div class="mt-3">

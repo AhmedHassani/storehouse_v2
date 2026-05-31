@@ -151,7 +151,7 @@ class OrderController extends Controller
             $request->merge(['order_status' => 'new']);
         }
 
-        if (in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
+        if ($order->boxy_uid && in_array($order->order_status, ['returned', 'delivered', 'failed', 'canceled'])) {
             Toastr::warning(translate('you_can_not_change_the_status_of ' . $order->order_status . ' order'));
             return back();
         }
@@ -328,25 +328,22 @@ class OrderController extends Controller
         }
 
         //delivery man notification
-        if (in_array($request->order_status, ['processing', 'out_for_delivery', 'returned', 'failed', 'canceled'])) {
+        $deliverymanFcmToken = $order->delivery_man?->fcm_token ?? null;
+        $value = translate('One of your order is ' . $request->order_status);
 
-            $deliverymanFcmToken = $order->delivery_man?->fcm_token ?? null;
-            $value = translate('One of your order is ' . $request->order_status);
-
-            try {
-                if (!is_null($deliverymanFcmToken)) {
-                    $data = [
-                        'title' => translate('your order is ' . $request->order_status),
-                        'description' => $value,
-                        'order_id' => $order['id'],
-                        'image' => '',
-                        'type' => 'order',
-                    ];
-                    Helpers::send_push_notif_to_device($deliverymanFcmToken, $data);
-                }
-            } catch (\Exception $e) {
-                Toastr::warning(translate('Push notification failed for DeliveryMan!'));
+        try {
+            if (!is_null($deliverymanFcmToken)) {
+                $data = [
+                    'title' => translate('your order is ' . $request->order_status),
+                    'description' => $value,
+                    'order_id' => $order['id'],
+                    'image' => '',
+                    'type' => 'order',
+                ];
+                Helpers::send_push_notif_to_device($deliverymanFcmToken, $data);
             }
+        } catch (\Exception $e) {
+            Toastr::warning(translate('Push notification failed for DeliveryMan!'));
         }
 
         Toastr::success(translate('Order status updated!'));
