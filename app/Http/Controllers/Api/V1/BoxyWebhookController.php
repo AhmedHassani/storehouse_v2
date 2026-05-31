@@ -149,38 +149,69 @@ class BoxyWebhookController extends Controller
         $boxy_event    = $request->input('event');
 
         // Boxy event name → local order_status
+        // Events not listed here are logged only (no status change).
         $event_status_map = [
-            // Successful delivery
-            'order.delivered'              => 'delivered',
 
-            // Scheduled for delivery (driver assigned)
-            'order.scheduled'              => 'confirmed',
+            // ── Collection from merchant ──────────────────────────────────
+            'order.collecting'                  => 'processing',
+            'order.out_for_collecting'          => 'processing',
+            'order.collected'                   => 'processing',
 
-            // Out for delivery
-            'order.out_for_delivery'       => 'out_for_delivery',
+            // ── Warehouse / sorting ───────────────────────────────────────
+            'order.received_warehouse'          => 'processing',
+            'order.sorted'                      => 'processing',
+            'order.received_carrier_warehouse'  => 'processing',
+            'order.inventory'                   => 'processing',
 
-            // On hold / postponed
-            'order.on_hold'                => 'on_hold',
-            'order.postponed'              => 'pending',
+            // ── Scheduled / confirmed ─────────────────────────────────────
+            'order.scheduled'                   => 'confirmed',
+            'order.hold_resolved'               => 'confirmed',
+            'order.resend'                      => 'confirmed',
 
-            // Retry after hold
-            'order.retry_request'          => 'pending',
-            'order.hold_resolved'          => 'confirmed',
+            // ── In transit / out for delivery ─────────────────────────────
+            'order.transferred_carrier'         => 'out_for_delivery',
+            'order.in_transit'                  => 'out_for_delivery',
+            'order.out_for_delivery'            => 'out_for_delivery',
 
-            // Return-to-origin lifecycle
-            'order.rto_request_pending'    => 'returned',
-            'order.rto_scheduled'          => 'returned',
-            'order.rto_collecting'         => 'returned',
-            'order.rto_in_transit'         => 'returned',
-            'order.rto_received_warehouse' => 'returned',
+            // ── Delivered ─────────────────────────────────────────────────
+            'order.delivered'                   => 'delivered',
+            'order.partially_delivered'         => 'delivered',
 
-            // Cancellation / deletion (from Boxy side)
-            'order.canceled'               => 'canceled',
-            'order.deleted'                => 'canceled',
+            // ── On hold / postponed ───────────────────────────────────────
+            'order.on_hold'                     => 'on_hold',
+            'order.exception'                   => 'on_hold',
+            'order.postponed'                   => 'pending',
 
-            // New / requested – informational only, no local status change needed
-            // 'order.new'       => null,
-            // 'order.requested' => null,
+            // ── Retry ─────────────────────────────────────────────────────
+            'order.retry_request'               => 'pending',
+            'order retry request'               => 'pending',   // space variant
+
+            // ── Return-to-origin (RTO) lifecycle ──────────────────────────
+            'order.rto_requested'               => 'returned',
+            'order.rto_request_pending'         => 'returned',
+            'order rto request pending'         => 'returned',  // space variant
+            'order.rto_scheduled'               => 'returned',
+            'order.rto_collecting'              => 'returned',
+            'order rto collecting'              => 'returned',  // space variant
+            'order.rto_in_transit'              => 'returned',
+            'order.rto_received_warehouse'      => 'returned',
+            'order.rto_received_carrier_warehouse' => 'returned',
+            'order.rto_partially_delivered'     => 'returned',
+            'order.rto_delivered'               => 'returned',
+
+            // ── Cancellation / deletion ───────────────────────────────────
+            'order.cancelled'                   => 'canceled',
+            'order.canceled'                    => 'canceled',
+            'order.deleted'                     => 'canceled',
+
+            // ── Claim events (log only — no order status change) ──────────
+            // claim.filed, claim.approved, claim.rejected, claim.closed,
+            // claim.compensated, claim compensation failed, order.claim settled
+            // → NOT included here → will be logged only
+
+            // ── Informational only (no status change needed) ──────────────
+            // order.new, order.requested, label.generated
+            // → NOT included here → will be logged only
         ];
 
         if (!$platform_code || !$boxy_event) {
