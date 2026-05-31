@@ -357,7 +357,7 @@ class BoxyDeliveryService
             "description" => $order->order_note ?? "طلب من النظام",
             "custom_id" => null,
             "products" => $products,
-            "saved_pick_up_address_uid" => "01KREAZG2XS38ES5P5TBWS9NCS", 
+            "saved_pick_up_address_uid" => "01KGF95S4N33M3Z21YE79484FC", 
             "size" => "M",
             "contact" => [
                 "full_name" => (string) $contactName,
