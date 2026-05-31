@@ -153,6 +153,9 @@ class BoxyWebhookController extends Controller
             // Successful delivery
             'order.delivered'              => 'delivered',
 
+            // Scheduled for delivery (driver assigned)
+            'order.scheduled'              => 'confirmed',
+
             // Out for delivery
             'order.out_for_delivery'       => 'out_for_delivery',
 
