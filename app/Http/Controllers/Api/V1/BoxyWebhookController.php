@@ -108,7 +108,7 @@ class BoxyWebhookController extends Controller
         }
 
         // Skip terminal orders
-        if (in_array($order->order_status, ['returned', 'failed', 'canceled', 'delivered'])) {
+        if (in_array($order->order_status, ['returned', 'failed', 'canceled', 'delivered', 'deleted'])) {
             Log::channel('boxy_webhook')->info(
                 "Self webhook: order #{$order_id} already in terminal state ({$order->order_status}), skipped."
             );
@@ -123,8 +123,8 @@ class BoxyWebhookController extends Controller
             "Self order #{$order_id}: [{$previous}] → [{$mapped_status}]"
         );
 
-        // Restore stock for failed/returned orders
-        if (in_array($mapped_status, ['returned', 'failed', 'canceled'])) {
+        // Restore stock for failed/returned/canceled/deleted orders
+        if (in_array($mapped_status, ['returned', 'failed', 'canceled', 'deleted'])) {
             $this->restoreStock($order);
         }
 
@@ -239,7 +239,7 @@ class BoxyWebhookController extends Controller
         }
 
         // Skip terminal orders
-        if (in_array($order->order_status, ['returned', 'failed', 'canceled', 'delivered'])) {
+        if (in_array($order->order_status, ['returned', 'failed', 'canceled', 'delivered', 'deleted'])) {
             Log::channel('boxy_webhook')->info(
                 "Boxy event [{$boxy_event}]: order #{$order->id} already in terminal state ({$order->order_status}), skipped."
             );
@@ -254,8 +254,8 @@ class BoxyWebhookController extends Controller
             "Boxy event [{$boxy_event}] → order #{$order->id} [{$previous}] → [{$mapped_status}]"
         );
 
-        // Restore stock for failed/returned/canceled
-        if (in_array($mapped_status, ['returned', 'failed', 'canceled'])) {
+        // Restore stock for failed/returned/canceled/deleted
+        if (in_array($mapped_status, ['returned', 'failed', 'canceled', 'deleted'])) {
             $this->restoreStock($order);
         }
 
