@@ -115,18 +115,23 @@ class BoxyWebhookController extends Controller
             return response()->json(['success' => true, 'message' => 'Order already in terminal state']);
         }
 
-        $previous        = $order->order_status;
+        $previous = $order->order_status;
+
+        // Restore stock if the webhook indicates a failure/return/cancel or if quantity is provided
+        $quantity = $request->input('quantity');
+        if (in_array($mapped_status, ['returned', 'failed', 'canceled', 'deleted']) || $quantity) {
+            $this->restoreStock($order);
+            Log::channel('boxy_webhook')->info(
+                "Self webhook: Restored stock for order #{$order_id} (quantity: {$quantity}) before status update"
+            );
+        }
+
         $order->order_status = $mapped_status;
         $order->save();
 
         Log::channel('boxy_webhook')->info(
             "Self order #{$order_id}: [{$previous}] → [{$mapped_status}]"
         );
-
-        // Restore stock for failed/returned/canceled/deleted orders
-        if (in_array($mapped_status, ['returned', 'failed', 'canceled', 'deleted'])) {
-            $this->restoreStock($order);
-        }
 
         // Sync back to Boxy if this order was also sent there
         if (!empty($order->boxy_uid)) {
